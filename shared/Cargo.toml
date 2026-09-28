@@ -1,0 +1,9 @@
+[package]
+name = "alpha-shared"
+version = "0.1.0"
+edition = "2021"
+description = "Shared types and constants for Alpha Solana terminal"
+
+[dependencies]
+anchor-lang = "0.30.1"
+anchor-spl = "0.30.1"

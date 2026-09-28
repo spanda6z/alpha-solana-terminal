@@ -1,0 +1,48 @@
+[toolchain]
+anchor_version = "0.30.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+fee_router = "DDAspZPbRaaJKNXPuVtuQLiDEHGyJ3ASMUcMigLNvdxW"
+bot_core = "4Ao2LU3FdW2j2wkJAktPLxhAkPAgCpv1hZwnpTRJm9DC"
+dca_bot = "Au1TvdD1sS6Tb1HsGebz8KRqMXqBK5N7tkREBWBkUDid"
+grid_bot = "GU843f7sYg6oBofypdvbSdFFXhWR7fQucq3DRtbcWy6Z"
+shadow_bot = "2qJXqHk8QkRr85FXqStz3g67KvDi2CnVeUkK2v6ZwZ2e"
+ladder_bot = "2GZGjRr7SarumQX3n6BeAw3rBsfcrjkwPjJzoRui3fYg"
+martingale_bot = "5ERrEkhCCJtVY2USYDBTfYvG4RtZJXxAxnSMHkTGE5m7"
+
+[programs.devnet]
+fee_router = "DDAspZPbRaaJKNXPuVtuQLiDEHGyJ3ASMUcMigLNvdxW"
+bot_core = "4Ao2LU3FdW2j2wkJAktPLxhAkPAgCpv1hZwnpTRJm9DC"
+dca_bot = "Au1TvdD1sS6Tb1HsGebz8KRqMXqBK5N7tkREBWBkUDid"
+grid_bot = "GU843f7sYg6oBofypdvbSdFFXhWR7fQucq3DRtbcWy6Z"
+shadow_bot = "2qJXqHk8QkRr85FXqStz3g67KvDi2CnVeUkK2v6ZwZ2e"
+ladder_bot = "2GZGjRr7SarumQX3n6BeAw3rBsfcrjkwPjJzoRui3fYg"
+martingale_bot = "5ERrEkhCCJtVY2USYDBTfYvG4RtZJXxAxnSMHkTGE5m7"
+
+[programs.mainnet]
+fee_router = "DDAspZPbRaaJKNXPuVtuQLiDEHGyJ3ASMUcMigLNvdxW"
+bot_core = "4Ao2LU3FdW2j2wkJAktPLxhAkPAgCpv1hZwnpTRJm9DC"
+dca_bot = "Au1TvdD1sS6Tb1HsGebz8KRqMXqBK5N7tkREBWBkUDid"
+grid_bot = "GU843f7sYg6oBofypdvbSdFFXhWR7fQucq3DRtbcWy6Z"
+shadow_bot = "2qJXqHk8QkRr85FXqStz3g67KvDi2CnVeUkK2v6ZwZ2e"
+ladder_bot = "2GZGjRr7SarumQX3n6BeAw3rBsfcrjkwPjJzoRui3fYg"
+martingale_bot = "5ERrEkhCCJtVY2USYDBTfYvG4RtZJXxAxnSMHkTGE5m7"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+startup_wait = 10000
+shutdown_wait = 2000
+upgradeable = false
