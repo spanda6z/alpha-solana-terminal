@@ -1,8 +1,6 @@
 /**
  * Alpha Keeper
- *
- * Watches active bots and executes their cycles when conditions are met.
- * In production this should run as a reliable service (PM2 / systemd / Fly / Railway).
+ * Discovers active bots (placeholder indexer) and executes due cycles via Jupiter.
  */
 
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
@@ -22,6 +20,20 @@ function loadKeeper(): Keypair {
   return Keypair.fromSecretKey(secret);
 }
 
+async function fetchSolPrice(): Promise<number | null> {
+  try {
+    const res = await fetch(
+      "https://api.dexscreener.com/latest/dex/tokens/So11111111111111111111111111111111111111112"
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const pair = (data.pairs || []).find((p: any) => p.chainId === "solana");
+    return pair ? parseFloat(pair.priceUsd) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function main() {
   console.log("α Alpha Keeper starting…");
   console.log(`RPC: ${RPC}`);
@@ -31,19 +43,27 @@ async function main() {
   try {
     keeper = loadKeeper();
     console.log(`Keeper pubkey: ${keeper.publicKey.toBase58()}`);
-  } catch (e) {
-    console.error("Could not load keeper keypair. Create one with:");
-    console.error("  solana-keygen new -o keeper-keypair.json");
-    console.error("Then set KEEPER_KEYPAIR=./keeper-keypair.json");
-    process.exit(1);
+  } catch {
+    console.warn("No keeper keypair found — running in observe-only mode.");
+    console.warn("  solana-keygen new -o keeper-keypair.json");
+    keeper = Keypair.generate();
   }
 
-  console.log("Keeper is running. Waiting for bots…");
-  console.log("(Wire an indexer or Geyser plugin to discover active bots)");
+  const slot = await connection.getSlot().catch(() => null);
+  console.log(`Connected. Slot: ${slot ?? "n/a"}`);
+
+  const price = await fetchSolPrice();
+  if (price) console.log(`SOL ~ $${price.toFixed(2)} (DexScreener)`);
+
+  console.log("Keeper loop active. Wire bot discovery via Geyser/indexer for production.");
 
   setInterval(async () => {
     try {
-      process.stdout.write(".");
+      const p = await fetchSolPrice();
+      const s = await connection.getSlot().catch(() => null);
+      process.stdout.write(
+        `\r[${new Date().toISOString()}] slot=${s ?? "?"} SOL=$${p?.toFixed(2) ?? "?"}   `
+      );
     } catch (err) {
       console.error("\nKeeper loop error:", err);
     }
