@@ -1,5 +1,6 @@
 /**
  * Alpha instruction builders
+ * After `anchor build` replace with generated IDL clients.
  */
 
 import {
@@ -34,7 +35,7 @@ export function buildCreateBotIx(params: {
   const [vaultPda] = getVaultPda(botPda);
 
   const data = Buffer.alloc(8 + 1 + 8);
-  data.writeBigUInt64LE(0n, 0);
+  data.writeBigUInt64LE(BigInt(0), 0);
   data.writeUInt8(params.strategy, 8);
   data.writeBigUInt64LE(params.initialDeposit, 9);
 
@@ -87,7 +88,7 @@ export function ensureAtaIx(
   payer: PublicKey,
   owner: PublicKey,
   mint: PublicKey
-): { ata: PublicKey; ix: TransactionInstruction | null } {
+): { ata: PublicKey; ix: TransactionInstruction } {
   const ata = getAssociatedTokenAddressSync(mint, owner);
   const ix = createAssociatedTokenAccountInstruction(payer, ata, owner, mint);
   return { ata, ix };
