@@ -9,25 +9,28 @@ import { useSwap } from "../hooks/useSwap";
 export function TokenPanel({
   mint,
   onClose,
+  onOpenBot,
 }: {
   mint: string;
   onClose: () => void;
+  onOpenBot?: () => void;
 }) {
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("0.1");
   const { connected } = useWallet();
-  const { buyWithSol, loading, error, lastTx } = useSwap();
+  const { buyWithSol, sellForSol, loading, error, lastTx } = useSwap();
 
   const handleTrade = async () => {
     if (!connected) return;
     const tokenMint = new PublicKey(mint);
-    const sol = parseFloat(amount) || 0;
-    if (sol <= 0) return;
+    const val = parseFloat(amount) || 0;
+    if (val <= 0) return;
 
     if (side === "buy") {
-      await buyWithSol(tokenMint, sol);
+      await buyWithSol(tokenMint, val);
     } else {
-      alert("Sell path: wire token → SOL via useSwap once user ATA balance is known");
+      const raw = Math.floor(val * 1e6);
+      await sellForSol(tokenMint, raw);
     }
   };
 
@@ -36,20 +39,15 @@ export function TokenPanel({
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
         <div>
           <div className="font-semibold">Token</div>
-          <div className="text-xs text-gray-500 font-mono truncate max-w-[240px]">
-            {mint}
-          </div>
+          <div className="text-xs text-gray-500 font-mono truncate max-w-[240px]">{mint}</div>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 rounded-md hover:bg-gray-800 text-gray-400"
-        >
+        <button onClick={onClose} className="p-1.5 rounded-md hover:bg-gray-800 text-gray-400">
           <X size={16} />
         </button>
       </div>
 
-      <div className="h-48 bg-gradient-to-b from-violet-950/30 to-transparent border-b border-gray-800 flex items-center justify-center text-gray-600 text-sm">
-        Chart (Birdeye / Helius)
+      <div className="h-40 bg-gradient-to-b from-violet-950/30 to-transparent border-b border-gray-800 flex items-center justify-center text-gray-600 text-sm">
+        Chart · Birdeye / Helius
       </div>
 
       <div className="p-4 space-y-4">
@@ -57,9 +55,7 @@ export function TokenPanel({
           <button
             onClick={() => setSide("buy")}
             className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
-              side === "buy"
-                ? "bg-emerald-600 text-white"
-                : "text-gray-400 hover:text-gray-200"
+              side === "buy" ? "bg-emerald-600 text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
             Buy
@@ -67,9 +63,7 @@ export function TokenPanel({
           <button
             onClick={() => setSide("sell")}
             className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
-              side === "sell"
-                ? "bg-rose-600 text-white"
-                : "text-gray-400 hover:text-gray-200"
+              side === "sell" ? "bg-rose-600 text-white" : "text-gray-400 hover:text-gray-200"
             }`}
           >
             Sell
@@ -123,10 +117,7 @@ export function TokenPanel({
           )}
         </button>
 
-        {error && (
-          <p className="text-xs text-rose-400 text-center break-all">{error}</p>
-        )}
-
+        {error && <p className="text-xs text-rose-400 text-center break-all">{error}</p>}
         {lastTx && (
           <a
             href={`https://solscan.io/tx/${lastTx}`}
@@ -139,7 +130,7 @@ export function TokenPanel({
         )}
 
         <p className="text-[11px] text-gray-500 text-center">
-          Non-custodial. Routes through Jupiter. Fee via Alpha Fee Router.
+          Non-custodial. Routes through Jupiter. Fee via Alpha Fee Router after deploy.
         </p>
       </div>
 
@@ -149,6 +140,7 @@ export function TokenPanel({
           {["DCA", "Grid", "Shadow", "Ladder"].map((b) => (
             <button
               key={b}
+              onClick={onOpenBot}
               className="py-2 text-xs rounded-md bg-gray-800/80 hover:bg-violet-600/20 text-gray-300 hover:text-violet-300 transition"
             >
               {b}

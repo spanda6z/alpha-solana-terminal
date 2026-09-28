@@ -66,5 +66,16 @@ export function useSwap() {
     [swap]
   );
 
-  return { swap, buyWithSol, loading, error, lastTx };
+  const sellForSol = useCallback(
+    (tokenMint: PublicKey, tokenAmountRaw: number) => {
+      return swap({
+        inputMint: tokenMint,
+        outputMint: MINTS.SOL,
+        amountLamports: Math.floor(tokenAmountRaw),
+      });
+    },
+    [swap]
+  );
+
+  return { swap, buyWithSol, sellForSol, loading, error, lastTx };
 }
