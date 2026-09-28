@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.yarn/
+.pnp.*
+
+# Build
+target/
+dist/
+.next/
+out/
+build/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Solana / Anchor keypairs — NEVER commit these
+keys/
+**/keypair.json
+*-keypair.json
+target/deploy/*-keypair.json
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# Misc
+.anchor/
+test-ledger/
