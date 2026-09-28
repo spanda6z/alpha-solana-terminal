@@ -5,6 +5,7 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { MarketBoard } from "@/components/MarketBoard";
 import { TokenPanel } from "@/components/TokenPanel";
 import { BotPanel } from "@/components/BotPanel";
+import { LeadersPanel } from "@/components/LeadersPanel";
 
 type Tab = "market" | "bots" | "leaders";
 
@@ -49,11 +50,18 @@ export default function Home() {
       </header>
 
       <div className="border-b border-gray-800/60 bg-[#0d0e14] px-4 py-2 flex gap-6 text-xs text-gray-400 overflow-x-auto">
-        <span><span className="text-emerald-400 font-medium">12.4k</span> tokens</span>
-        <span><span className="text-rose-400 font-medium">68%</span> dead</span>
-        <span><span className="text-emerald-400 font-medium">1.8k</span> safe</span>
-        <span><span className="text-sky-400 font-medium">940</span> new today</span>
-        <span><span className="text-amber-400 font-medium">4.1m</span> txs today</span>
+        <span>
+          <span className="text-emerald-400 font-medium">Live</span> DexScreener
+        </span>
+        <span>
+          <span className="text-violet-400 font-medium">Jupiter</span> swaps
+        </span>
+        <span>
+          <span className="text-sky-400 font-medium">6</span> bot strategies
+        </span>
+        <span>
+          <span className="text-amber-400 font-medium">1%</span> protocol fee
+        </span>
       </div>
 
       <main className="flex h-[calc(100vh-96px)]">
@@ -62,16 +70,19 @@ export default function Home() {
             <MarketBoard onSelect={setSelectedToken} selected={selectedToken} />
           )}
           {tab === "bots" && <BotPanel />}
-          {tab === "leaders" && (
-            <div className="p-8 text-gray-500 text-center">
-              Smart money leaderboard coming soon
-            </div>
-          )}
+          {tab === "leaders" && <LeadersPanel />}
         </div>
 
         {selectedToken && tab === "market" && (
-          <div className="w-[380px] border-l border-gray-800 bg-[#0d0e14] overflow-y-auto">
-            <TokenPanel mint={selectedToken} onClose={() => setSelectedToken(null)} />
+          <div className="w-full max-w-sm border-l border-gray-800 bg-[#0d0e14] overflow-y-auto">
+            <TokenPanel
+              mint={selectedToken}
+              onClose={() => setSelectedToken(null)}
+              onOpenBot={() => {
+                setSelectedToken(null);
+                setTab("bots");
+              }}
+            />
           </div>
         )}
       </main>
