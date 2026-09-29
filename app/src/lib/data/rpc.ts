@@ -2,7 +2,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { getMint, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import type { NormalizedEvent } from "./types";
 
-const rpcUrl = () => process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.mainnet-beta.solana.com";
+const rpcUrl = () => process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || "https://api.mainnet-beta.solana.com";
 
 async function inspect(mint: string): Promise<NormalizedEvent | null> {
   try {
@@ -41,7 +41,7 @@ async function inspect(mint: string): Promise<NormalizedEvent | null> {
 }
 
 export async function fetchAuthorityEvents(mints: string[]): Promise<NormalizedEvent[]> {
-  if (!(process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC_URL)) return [];
+  if (!(process.env.SOLANA_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL)) return [];
   const results = await Promise.all(mints.slice(0, 12).map(inspect));
   return results.filter(Boolean) as NormalizedEvent[];
 }
