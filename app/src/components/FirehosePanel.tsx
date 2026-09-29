@@ -57,7 +57,7 @@ export function FirehosePanel({ onSelect }: { onSelect: (t: { mint: string; pair
       <div className="flex items-center justify-between border-b border-[#1a1a1a] px-3 py-2">
         <div>
           <div className="mono text-[12px] font-semibold tracking-wide">FIREHOSE</div>
-          <div className="mono mt-0.5 text-[9px] text-[#4a4a4a]">NORMALIZED EVENTS · NEW PAIRS</div>
+          <div className="mono mt-0.5 text-[9px] text-[#4a4a4a]">NORMALIZED EVENTS · PAIRS · SWAPS · AUTHORITY</div>
         </div>
         <div className="flex items-center gap-3">
           <span className="mono text-[8px] text-[#555]">{snapshot?.sources.filter(s => s.enabled).length ?? 0} SOURCES</span>
