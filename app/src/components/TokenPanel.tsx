@@ -110,9 +110,9 @@ export function TokenPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 h-11 border-b border-[#1a1a1a]">
+      <div className="flex items-center justify-between px-3 h-12 border-b border-[#1a1a1a]">
         <div className="min-w-0">
-          <div className="mono text-[11px] tracking-wider text-[#c8ff00]">
+          <div className="mono text-[11px] tracking-wider text-[#ff6b00]">
             {symbol ? symbol.toUpperCase() : "TRADE"}
           </div>
           <div className="mono text-[9px] text-[#3d3d3d] truncate max-w-[200px]">{mint}</div>
@@ -123,13 +123,13 @@ export function TokenPanel({
               href={`https://dexscreener.com/solana/${pairAddress}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1 text-[#6b6b6b] hover:text-[#c8ff00]"
+              className="p-2 text-[#6b6b6b] active:text-[#ff6b00]"
             >
-              <ExternalLink size={13} />
+              <ExternalLink size={14} />
             </a>
           )}
-          <button onClick={onClose} className="p-1 text-[#6b6b6b] hover:text-[#ececec]">
-            <X size={14} />
+          <button onClick={onClose} className="p-2 text-[#6b6b6b] active:text-[#ececec]">
+            <X size={16} />
           </button>
         </div>
       </div>
@@ -144,7 +144,7 @@ export function TokenPanel({
         </span>
       </div>
 
-      <div className="h-44 border-b border-[#1a1a1a] bg-[#050505] relative">
+      <div className="h-40 sm:h-44 border-b border-[#1a1a1a] bg-[#050505] relative">
         {chartSrc ? (
           <iframe title="chart" src={chartSrc} className="w-full h-full border-0" allow="clipboard-write" />
         ) : (
@@ -162,10 +162,10 @@ export function TokenPanel({
               setAmount("0.1");
             }}
             className={clsx(
-              "py-2 mono text-[11px] tracking-wider transition",
+              "py-3 mono text-[12px] tracking-wider transition",
               side === "buy"
-                ? "bg-[#00e676] text-[#050505] font-semibold"
-                : "text-[#6b6b6b] hover:text-[#ececec]"
+                ? "bg-[#ff6b00] text-[#050505] font-semibold"
+                : "text-[#6b6b6b] active:text-[#ececec]"
             )}
           >
             BUY
@@ -176,10 +176,10 @@ export function TokenPanel({
               setAmount(token.balance > 0 ? String(token.balance) : "0");
             }}
             className={clsx(
-              "py-2 mono text-[11px] tracking-wider transition border-l border-[#1a1a1a]",
+              "py-3 mono text-[12px] tracking-wider transition border-l border-[#1a1a1a]",
               side === "sell"
                 ? "bg-[#ff3d57] text-white font-semibold"
-                : "text-[#6b6b6b] hover:text-[#ececec]"
+                : "text-[#6b6b6b] active:text-[#ececec]"
             )}
           >
             SELL
@@ -199,11 +199,12 @@ export function TokenPanel({
             onChange={(e) => setAmount(e.target.value)}
             className="alpha-input"
             disabled={loading}
+            inputMode="decimal"
           />
           {impact && <div className="mono text-[9px] text-[#3d3d3d] mt-1">{impact}</div>}
         </div>
 
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-4 gap-1.5">
           {(side === "buy" ? ["0.1", "0.5", "1", "MAX"] : ["25%", "50%", "75%", "MAX"]).map((v) => (
             <button
               key={v}
@@ -214,7 +215,7 @@ export function TokenPanel({
                   setAmount((token.balance * pct).toString());
                 } else setAmount(v);
               }}
-              className="py-1.5 mono text-[10px] border border-[#1a1a1a] text-[#6b6b6b] hover:border-[#c8ff00] hover:text-[#c8ff00] transition"
+              className="py-2.5 mono text-[11px] border border-[#1a1a1a] text-[#6b6b6b] active:border-[#ff6b00] active:text-[#ff6b00] transition"
               disabled={loading}
             >
               {v}
@@ -222,17 +223,17 @@ export function TokenPanel({
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="mono text-[9px] text-[#3d3d3d] tracking-wider shrink-0">SLIP</span>
           {[50, 100, 300, 500].map((bps) => (
             <button
               key={bps}
               onClick={() => setSlippage(bps)}
               className={clsx(
-                "flex-1 py-1 mono text-[10px] border transition",
+                "flex-1 py-2 mono text-[11px] border transition",
                 slippage === bps
-                  ? "border-[#c8ff00] text-[#c8ff00]"
-                  : "border-[#1a1a1a] text-[#6b6b6b] hover:text-[#ececec]"
+                  ? "border-[#ff6b00] text-[#ff6b00]"
+                  : "border-[#1a1a1a] text-[#6b6b6b]"
               )}
             >
               {bps / 100}%
@@ -244,8 +245,8 @@ export function TokenPanel({
           onClick={handleTrade}
           disabled={!connected || loading}
           className={clsx(
-            "w-full py-2.5 mono text-[12px] font-semibold tracking-wider transition disabled:opacity-40",
-            side === "buy" ? "bg-[#00e676] text-[#050505]" : "bg-[#ff3d57] text-white"
+            "w-full py-3.5 mono text-[13px] font-semibold tracking-wider transition disabled:opacity-40",
+            side === "buy" ? "bg-[#ff6b00] text-[#050505]" : "bg-[#ff3d57] text-white"
           )}
         >
           {loading ? (
@@ -265,21 +266,21 @@ export function TokenPanel({
             href={`https://solscan.io/tx/${lastTx}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="block mono text-[10px] text-[#c8ff00] text-center hover:underline"
+            className="block mono text-[10px] text-[#ff6b00] text-center"
           >
             TX → SOLSCAN
           </a>
         )}
       </div>
 
-      <div className="border-t border-[#1a1a1a] p-3">
+      <div className="border-t border-[#1a1a1a] p-3 pb-6">
         <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-2">BOTS · PREVIEW</div>
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-2 gap-1.5">
           {["DCA", "GRID", "SHADOW", "LADDER"].map((b) => (
             <button
               key={b}
               onClick={onOpenBot}
-              className="py-2 mono text-[10px] border border-[#1a1a1a] text-[#6b6b6b] hover:border-[#c8ff00] hover:text-[#c8ff00] transition"
+              className="py-2.5 mono text-[11px] border border-[#1a1a1a] text-[#6b6b6b] active:border-[#ff6b00] active:text-[#ff6b00] transition"
             >
               {b}
             </button>
