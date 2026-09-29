@@ -1,7 +1,7 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useSolBalance } from "../hooks/useSolBalance";
+import { useSolBalance } from "../hooks/useTokenBalance";
 
 export function AccountPanel() {
   const { connected, publicKey } = useWallet();
