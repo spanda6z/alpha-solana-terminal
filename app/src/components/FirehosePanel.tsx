@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchTrendingTokens, type TokenRow } from "../lib/tokens";
+import { fetchFirehoseTokens, type TokenRow } from "../lib/tokens";
 
 type EventRow = TokenRow & { seen: string; kind: "MARKET PULSE" | "NEW TO BOARD" };
 
@@ -11,11 +11,11 @@ export function FirehosePanel({ onSelect }: { onSelect: (t: { mint: string; pair
 
   const load = async () => {
     setLoading(true);
-    const tokens = await fetchTrendingTokens(18);
+    const tokens = await fetchFirehoseTokens(30);
     const next = tokens.map((t, i) => ({
       ...t,
-      seen: i < 4 ? "<1m" : i < 9 ? "1m" : i < 14 ? "2m" : "5m",
-      kind: Math.abs(t.change24h) > 40 ? "MARKET PULSE" : "NEW TO BOARD",
+      seen: t.age === "<1d" ? (i < 4 ? "<1m" : i < 10 ? "1m" : "2m") : `${Math.max(5, i * 2)}m`,
+      kind: Math.abs(t.change24h) > 40 ? "MARKET PULSE" : "NEW / ACTIVE PAIR",
     } as EventRow));
     setRows(next);
     setLoading(false);
