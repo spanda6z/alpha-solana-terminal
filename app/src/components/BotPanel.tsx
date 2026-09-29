@@ -42,17 +42,17 @@ export function BotPanel() {
 
   if (selected) {
     return (
-      <div className="p-4 max-w-md">
+      <div className="p-4 max-w-md mx-auto">
         <button
           onClick={() => {
             setSelected(null);
             setMsg(null);
           }}
-          className="mono text-[10px] text-[#6b6b6b] hover:text-[#c8ff00] mb-4 tracking-wider"
+          className="mono text-[10px] text-[#6b6b6b] hover:text-[#ff6b00] mb-4 tracking-wider"
         >
           ← BACK
         </button>
-        <h2 className="mono text-[14px] font-semibold text-[#c8ff00] mb-1">{selected.name}</h2>
+        <h2 className="mono text-[14px] font-semibold text-[#ff6b00] mb-1">{selected.name}</h2>
         <p className="mono text-[11px] text-[#6b6b6b] mb-5">{selected.desc}</p>
 
         <div className="space-y-3">
@@ -85,7 +85,7 @@ export function BotPanel() {
           <button
             onClick={handleCreate}
             disabled={!connected || busy || !tokenMint}
-            className="w-full py-2.5 mono text-[12px] font-semibold tracking-wider bg-[#c8ff00] text-[#050505] disabled:opacity-40"
+            className="w-full py-3 mono text-[12px] font-semibold tracking-wider bg-[#ff6b00] text-[#050505] disabled:opacity-40"
           >
             {busy ? (
               <span className="inline-flex items-center gap-2">
@@ -104,20 +104,20 @@ export function BotPanel() {
   }
 
   return (
-    <div className="p-4 max-w-3xl">
+    <div className="p-4 max-w-3xl mx-auto">
       <div className="mb-4">
         <h2 className="mono text-[14px] font-semibold tracking-tight">BOTS</h2>
-        <p className="mono text-[11px] text-[#6b6b6b] mt-1">Non-custodial. Vault stays yours.</p>
+        <p className="mono text-[11px] text-[#6b6b6b] mt-1">Preview · on-chain later</p>
       </div>
       <div className="border border-[#1a1a1a] divide-y divide-[#1a1a1a]">
         {STRATEGIES.map((s) => (
           <button
             key={s.id}
             onClick={() => setSelected(s)}
-            className="w-full text-left px-3 py-3 hover:bg-[#0c0c0c] transition flex items-start justify-between gap-4"
+            className="w-full text-left px-3 py-3.5 active:bg-[#0c0c0c] transition flex items-start justify-between gap-4"
           >
             <div>
-              <div className="mono text-[12px] font-medium text-[#c8ff00]">{s.name}</div>
+              <div className="mono text-[12px] font-medium text-[#ff6b00]">{s.name}</div>
               <div className="mono text-[11px] text-[#6b6b6b] mt-0.5">{s.desc}</div>
             </div>
             <div className="mono text-[9px] text-[#3d3d3d] shrink-0">#{s.strategyId}</div>

@@ -10,13 +10,13 @@ const ROWS = [
 
 export function LeadersPanel() {
   return (
-    <div className="p-4 max-w-xl">
+    <div className="p-4 max-w-xl mx-auto">
       <div className="mb-4">
         <h2 className="mono text-[14px] font-semibold">WALLETS</h2>
-        <p className="mono text-[11px] text-[#6b6b6b] mt-1">7d PnL · shadow from BOTS</p>
+        <p className="mono text-[11px] text-[#6b6b6b] mt-1">7d PnL · mock data</p>
       </div>
-      <div className="border border-[#1a1a1a]">
-        <div className="grid grid-cols-[36px_1fr_80px_56px_56px] gap-2 px-3 py-1.5 mono text-[9px] text-[#3d3d3d] tracking-wider border-b border-[#1a1a1a]">
+      <div className="border border-[#1a1a1a] overflow-x-auto">
+        <div className="grid grid-cols-[36px_1fr_80px_56px_56px] gap-2 px-3 py-1.5 mono text-[9px] text-[#3d3d3d] tracking-wider border-b border-[#1a1a1a] min-w-[300px]">
           <div>#</div>
           <div>ADDR</div>
           <div className="text-right">PNL</div>
@@ -26,17 +26,16 @@ export function LeadersPanel() {
         {ROWS.map((r) => (
           <div
             key={r.rank}
-            className="grid grid-cols-[36px_1fr_80px_56px_56px] gap-2 px-3 py-2.5 border-b border-[#111] mono text-[11px] hover:bg-[#0c0c0c]"
+            className="grid grid-cols-[36px_1fr_80px_56px_56px] gap-2 px-3 py-2.5 border-b border-[#111] mono text-[11px] min-w-[300px]"
           >
             <div className="text-[#3d3d3d]">{r.rank}</div>
-            <div className="text-[#c8ff00]">{r.wallet}</div>
-            <div className="text-right text-[#00e676]">{r.pnl}</div>
+            <div className="text-[#ff6b00]">{r.wallet}</div>
+            <div className="text-right text-[#22c55e]">{r.pnl}</div>
             <div className="text-right text-[#6b6b6b]">{r.win}</div>
             <div className="text-right text-[#6b6b6b]">{r.n}</div>
           </div>
         ))}
       </div>
-      <p className="mt-3 mono text-[9px] text-[#3d3d3d]">MOCK · INDEXER LATER</p>
     </div>
   );
 }
