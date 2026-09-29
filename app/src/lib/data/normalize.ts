@@ -11,7 +11,7 @@ export function dedupeEvents(events: NormalizedEvent[]): NormalizedEvent[] {
 
 export function sourceStatuses(): DataSourceStatus[] {
   const helius = Boolean(process.env.HELIUS_API_KEY);
-  const rpc = Boolean(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL);
+  const rpc = Boolean(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || process.env.SOLANA_RPC_URL);
   return [
     { name: "dexscreener", enabled: true, live: true, detail: "Public pair discovery" },
     { name: "helius", enabled: helius, live: helius, detail: helius ? "Enhanced transaction events" : "Set HELIUS_API_KEY for swap events" },
