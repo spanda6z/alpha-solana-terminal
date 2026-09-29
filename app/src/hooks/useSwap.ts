@@ -66,23 +66,25 @@ export function useSwap() {
   );
 
   const buyWithSol = useCallback(
-    (tokenMint: PublicKey, solAmount: number) => {
+    (tokenMint: PublicKey, solAmount: number, slippageBps = 100) => {
       const lamports = Math.floor(solAmount * 1e9);
       return swap({
         inputMint: MINTS.SOL,
         outputMint: tokenMint,
         amountLamports: lamports,
+        slippageBps,
       });
     },
     [swap]
   );
 
   const sellForSol = useCallback(
-    (tokenMint: PublicKey, tokenAmountRaw: number | bigint) => {
+    (tokenMint: PublicKey, tokenAmountRaw: number | bigint, slippageBps = 100) => {
       return swap({
         inputMint: tokenMint,
         outputMint: MINTS.SOL,
         amountLamports: Number(tokenAmountRaw),
+        slippageBps,
       });
     },
     [swap]

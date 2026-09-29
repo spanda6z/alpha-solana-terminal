@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { MarketBoard } from "@/components/MarketBoard";
+import { MarketBoard, type SelectedToken } from "@/components/MarketBoard";
 import { TokenPanel } from "@/components/TokenPanel";
 import { BotPanel } from "@/components/BotPanel";
 import { LeadersPanel } from "@/components/LeadersPanel";
@@ -11,7 +11,7 @@ type Tab = "market" | "bots" | "leaders";
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("market");
-  const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [selected, setSelected] = useState<SelectedToken | null>(null);
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#ececec]">
@@ -21,7 +21,6 @@ export default function Home() {
             <span className="mono text-[13px] font-semibold tracking-tight text-[#c8ff00]">ALPHA</span>
             <span className="mono text-[10px] text-[#3d3d3d] uppercase tracking-widest">/ sol</span>
           </div>
-
           <nav className="flex items-stretch h-11">
             {(
               [
@@ -44,11 +43,8 @@ export default function Home() {
             ))}
           </nav>
         </div>
-
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline mono text-[10px] text-[#3d3d3d]">
-            MAINNET · 1% · NON-CUSTODIAL
-          </span>
+          <span className="hidden sm:inline mono text-[10px] text-[#3d3d3d]">MAINNET · JUPITER</span>
           <WalletMultiButton />
         </div>
       </header>
@@ -57,25 +53,26 @@ export default function Home() {
         <span><span className="text-[#c8ff00]">●</span> FEED LIVE</span>
         <span>DEXSCREENER</span>
         <span>JUPITER ROUTER</span>
-        <span>6 STRATEGIES</span>
       </div>
 
       <main className="flex h-[calc(100vh-76px)]">
         <div className="flex-1 min-w-0 overflow-hidden">
           {tab === "market" && (
-            <MarketBoard onSelect={setSelectedToken} selected={selectedToken} />
+            <MarketBoard onSelect={setSelected} selected={selected?.mint ?? null} />
           )}
           {tab === "bots" && <BotPanel />}
           {tab === "leaders" && <LeadersPanel />}
         </div>
 
-        {selectedToken && tab === "market" && (
-          <div className="w-full max-w-[340px] border-l border-[#1a1a1a] bg-[#0a0a0a] overflow-y-auto shrink-0">
+        {selected && tab === "market" && (
+          <div className="w-full max-w-[360px] border-l border-[#1a1a1a] bg-[#0a0a0a] overflow-y-auto shrink-0">
             <TokenPanel
-              mint={selectedToken}
-              onClose={() => setSelectedToken(null)}
+              mint={selected.mint}
+              pairAddress={selected.pairAddress}
+              symbol={selected.symbol}
+              onClose={() => setSelected(null)}
               onOpenBot={() => {
-                setSelectedToken(null);
+                setSelected(null);
                 setTab("bots");
               }}
             />
