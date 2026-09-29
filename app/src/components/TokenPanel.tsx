@@ -102,6 +102,7 @@ export function TokenPanel({
   };
 
   const [deskData, setDeskData] = useState<any>(null);
+  const [holderData, setHolderData] = useState<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,8 +116,16 @@ export function TokenPanel({
       } catch {}
     }
     loadDesk();
+    async function loadHolders() {
+      try {
+        const res = await fetch(`/api/holders?mint=${encodeURIComponent(mint)}`, { cache: "no-store" });
+        if (res.ok) setHolderData((await res.json()).holders);
+      } catch {}
+    }
+    loadHolders();
     const id = setInterval(loadDesk, 30000);
-    return () => { cancelled = true; clearInterval(id); };
+    const holderId = setInterval(loadHolders, 60000);
+    return () => { cancelled = true; clearInterval(id); clearInterval(holderId); };
   }, [mint]);
 
   const chartSrc = pairAddress ? `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0` : null;
@@ -150,7 +159,7 @@ export function TokenPanel({
       </div>
 
       {deskTab !== "EXECUTION" ? (
-        <DeskIntel tab={deskTab} data={deskData} />
+        <DeskIntel tab={deskTab} data={deskData} holders={holderData} />
       ) : (
         <div className="p-3 space-y-3 flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 border border-[#1a1a1a]">
@@ -192,7 +201,7 @@ export function TokenPanel({
   );
 }
 
-function DeskIntel({ tab, data }: { tab: DeskTab; data: any }) {
+function DeskIntel({ tab, data, holders }: { tab: DeskTab; data: any; holders: any }) {
   const events = data?.events ?? [];
   const swaps = events.filter((e: any) => e.kind === "SWAP");
   const buys = swaps.filter((e: any) => e.side === "BUY").length;
@@ -207,7 +216,7 @@ function DeskIntel({ tab, data }: { tab: DeskTab; data: any }) {
   if (tab === "MARKET") rows = [["PRICE", pair?.priceUsd ? `${Number(pair.priceUsd).toPrecision(5)}` : "Market feed"],["24H", pairMeta.change24h != null ? `${Number(pairMeta.change24h).toFixed(2)}%` : "Market feed"],["MARKET CAP", usd(pairMeta.marketCap)],["LIQUIDITY", usd(pair?.liquidityUsd)]];
   if (tab === "FLOW") rows = [["BUY EVENTS",String(buys)],["SELL EVENTS",String(sells)],["SWAP EVENTS",String(swaps.length)],["FLOW BIAS", buys+sells ? buys>sells ? "BUY OBSERVED" : sells>buys ? "SELL OBSERVED" : "BALANCED" : "NO SWAPS INDEXED"]];
   if (tab === "LIQUIDITY") rows = [["POOL LIQUIDITY",usd(pair?.liquidityUsd)],["24H VOLUME",usd(pairMeta.volume24h)],["PAIR",pair?.pairAddress ? pair.pairAddress.slice(0,8)+"…" : "—"],["DEPTH",pair?.liquidityUsd ? "OBSERVED" : "INDEXER REQUIRED"]];
-  if (tab === "HOLDERS") { rows = [["HOLDER COUNT","INDEXER REQUIRED"],["TOP 10","INDEXER REQUIRED"],["CONCENTRATION","INDEXER REQUIRED"],["DISTRIBUTION","INDEXER REQUIRED"]]; note = "Holder distribution requires token-account indexing; it is not inferred from swap count."; }
+  if (tab === "HOLDERS") { rows = [["HOLDER COUNT",holders?.holderCount != null ? String(holders.holderCount) : "INDEXER REQUIRED"],["TOP 1 SHARE",holders?.topHolders?.[0] ? `${Number(holders.topHolders[0].sharePct).toFixed(2)}%` : "INDEXER REQUIRED"],["TOP 10 SHARE",holders?.topHolders ? `${holders.topHolders.slice(0,10).reduce((s:any,h:any)=>s+Number(h.sharePct||0),0).toFixed(2)}%` : "INDEXER REQUIRED"],["TOTAL SUPPLY OBSERVED",holders?.totalAmount != null ? Number(holders.totalAmount).toLocaleString(undefined,{maximumFractionDigits:2}) : "INDEXER REQUIRED"]]; note = holders ? "Observed non-zero token accounts aggregated by owner through Solana RPC. This is a live snapshot, not a historical holder series." : "Holder distribution requires an RPC indexer. No holder numbers are invented."; }
   if (tab === "RISK") rows = [["MINT AUTH",meta.mintAuthorityRevoked === true ? "REVOKED" : meta.mintAuthorityRevoked === false ? "ACTIVE" : "INDEXER REQUIRED"],["FREEZE AUTH",meta.freezeAuthorityRevoked === true ? "REVOKED" : meta.freezeAuthorityRevoked === false ? "ACTIVE" : "INDEXER REQUIRED"],["TOKEN PROGRAM",meta.tokenProgram ? String(meta.tokenProgram).slice(0,16)+"…" : "INDEXER REQUIRED"],["RISK FLAGS",meta.mintAuthorityRevoked === true && meta.freezeAuthorityRevoked === true ? "AUTHORITIES REVOKED" : "REVIEW"]];
   if (tab === "TX") rows = [["SWAPS",String(swaps.length)],["BUYS",String(buys)],["SELLS",String(sells)],["SIGNATURES",swaps.some((e:any)=>e.signature) ? "AVAILABLE" : "INDEXER REQUIRED"]];
   return <div className="flex-1 overflow-y-auto">
