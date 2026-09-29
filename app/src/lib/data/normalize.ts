@@ -10,24 +10,11 @@ export function dedupeEvents(events: NormalizedEvent[]): NormalizedEvent[] {
 }
 
 export function sourceStatuses(): DataSourceStatus[] {
+  const helius = Boolean(process.env.HELIUS_API_KEY);
+  const rpc = Boolean(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL);
   return [
-    {
-      name: "dexscreener",
-      enabled: true,
-      live: true,
-      detail: "Public pair discovery",
-    },
-    {
-      name: "helius",
-      enabled: Boolean(process.env.HELIUS_API_KEY),
-      live: false,
-      detail: process.env.HELIUS_API_KEY ? "Indexer adapter ready" : "Set HELIUS_API_KEY for transaction events",
-    },
-    {
-      name: "solana-rpc",
-      enabled: Boolean(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL),
-      live: Boolean(process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL),
-      detail: "Mint and authority inspection",
-    },
+    { name: "dexscreener", enabled: true, live: true, detail: "Public pair discovery" },
+    { name: "helius", enabled: helius, live: helius, detail: helius ? "Enhanced transaction events" : "Set HELIUS_API_KEY for swap events" },
+    { name: "solana-rpc", enabled: rpc, live: rpc, detail: rpc ? "Mint and authority inspection" : "Set SOLANA_RPC_URL for authority inspection" },
   ];
 }
