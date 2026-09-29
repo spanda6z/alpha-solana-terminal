@@ -15,6 +15,9 @@ export function RapSheetPanel() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [launches, setLaunches] = useState<Launch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedWallet, setExpandedWallet] = useState<string | null>(null);
+  const [walletIntel, setWalletIntel] = useState<any>(null);
+  const [intelLoading, setIntelLoading] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -27,6 +30,15 @@ export function RapSheetPanel() {
     } catch {
       setWallets([]); setLaunches([]);
     } finally { setLoading(false); }
+  }
+
+  async function inspectWallet(wallet: string) {
+    if (expandedWallet === wallet) { setExpandedWallet(null); setWalletIntel(null); return; }
+    setExpandedWallet(wallet); setWalletIntel(null); setIntelLoading(true);
+    try {
+      const res = await fetch(`/api/wallet-intel?wallet=${encodeURIComponent(wallet)}`, { cache: "no-store" });
+      if (res.ok) setWalletIntel((await res.json()).intel);
+    } catch {} finally { setIntelLoading(false); }
   }
 
   useEffect(() => { load(); const id=setInterval(load,30000); return()=>clearInterval(id); }, []);
@@ -54,10 +66,21 @@ export function RapSheetPanel() {
 
       <div className="flex-1 overflow-y-auto">
         {section !== "LAUNCH HISTORY" && wallets.map(w =>
-          <div key={w.wallet} className="grid grid-cols-[1fr_auto_auto] border-b border-[#111] px-3 py-3">
-            <div><div className="mono text-[11px] text-[#e5e5e5]">{short(w.wallet)}</div><div className="mono mt-1 text-[8px] text-[#444]">OBSERVED IN SWAP EVENTS · {w.tokens} TOKEN EVENTS</div></div>
-            <div className="mono self-center px-3 text-[10px] text-[#888]">{w.swaps}</div>
-            <div className="mono self-center text-[10px]"><span className="text-[#22c55e]">{w.buys}</span> <span className="text-[#555]">/</span> <span className="text-[#ff3d57]">{w.sells}</span></div>
+          <div key={w.wallet} className="border-b border-[#111]">
+            <button onClick={() => inspectWallet(w.wallet)} className="w-full grid grid-cols-[1fr_auto_auto] px-3 py-3 text-left">
+              <div><div className="mono text-[11px] text-[#e5e5e5]">{short(w.wallet)}</div><div className="mono mt-1 text-[8px] text-[#444]">OBSERVED IN SWAP EVENTS · {w.tokens} TOKEN EVENTS</div></div>
+              <div className="mono self-center px-3 text-[10px] text-[#888]">{w.swaps}</div>
+              <div className="mono self-center text-[10px]"><span className="text-[#22c55e]">{w.buys}</span> <span className="text-[#555]">/</span> <span className="text-[#ff3d57]">{w.sells}</span></div>
+            </button>
+            {expandedWallet === w.wallet && <div className="mx-3 mb-3 border border-[#1a1a1a] bg-[#080808] p-3">
+              {intelLoading ? <div className="mono text-[9px] text-[#555]">INDEXING WALLET…</div> : walletIntel ? <>
+                <div className="grid grid-cols-4 gap-px bg-[#1a1a1a]">
+                  {[["TX",walletIntel.transactions],["SWAPS",walletIntel.swaps],["BUYS",walletIntel.buys],["SELLS",walletIntel.sells]].map(([k,v])=><div key={String(k)} className="bg-[#0a0a0a] p-2"><div className="mono text-[7px] text-[#444]">{k}</div><div className="mono mt-1 text-[10px] text-[#aaa]">{v}</div></div>)}
+                </div>
+                <div className="mono mt-3 text-[8px] text-[#444]">TOKENS OBSERVED · {walletIntel.tokenMints?.length ?? 0}</div>
+                <div className="mt-2 space-y-1">{(walletIntel.recent ?? []).slice(0,5).map((tx:any)=><div key={tx.signature} className="flex justify-between gap-2 mono text-[8px] text-[#555]"><span>{tx.type}</span><span className="truncate">{tx.signature ? tx.signature.slice(0,10)+"…" : "—"}</span></div>)}</div>
+              </> : <div className="mono text-[9px] text-[#555]">WALLET HISTORY REQUIRES HELIUS_API_KEY</div>}
+            </div>}
           </div>
         )}
 
