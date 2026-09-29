@@ -14,58 +14,79 @@ export default function Home() {
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#0a0b0f] text-gray-100 font-sans">
-      <header className="border-b border-gray-800 bg-[#0d0e14] px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center font-bold text-sm">
+    <div className="alpha-bg min-h-screen text-gray-100">
+      <header className="glass sticky top-0 z-40 border-b border-white/[0.06] px-4 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 flex items-center justify-center font-bold text-sm shadow-lg shadow-violet-500/25">
               α
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 live-dot ring-2 ring-[#07080c]" />
             </div>
-            <span className="font-semibold tracking-tight text-lg">ALPHA</span>
+            <div>
+              <div className="font-semibold tracking-tight text-[15px] leading-none">ALPHA</div>
+              <div className="text-[10px] text-gray-500 tracking-wide mt-0.5">SOLANA TERMINAL</div>
+            </div>
           </div>
 
-          <nav className="flex gap-1">
-            {(["market", "bots", "leaders"] as Tab[]).map((t) => (
+          <div className="h-5 w-px bg-white/[0.08] hidden sm:block" />
+
+          <nav className="flex gap-0.5 p-0.5 rounded-lg bg-white/[0.03] border border-white/[0.05]">
+            {(
+              [
+                { id: "market", label: "Market" },
+                { id: "bots", label: "Bots" },
+                { id: "leaders", label: "Leaders" },
+              ] as { id: Tab; label: string }[]
+            ).map((t) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium capitalize transition ${
-                  tab === t
-                    ? "bg-violet-600/20 text-violet-300"
-                    : "text-gray-400 hover:text-gray-200"
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-3.5 py-1.5 rounded-md text-[13px] font-medium transition ${
+                  tab === t.id
+                    ? "bg-violet-600/25 text-violet-200 shadow-sm"
+                    : "text-gray-500 hover:text-gray-300"
                 }`}
               >
-                {t}
+                {t.label}
               </button>
             ))}
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="text-xs text-gray-500 hidden sm:block">
-            Solana · Non-custodial · 1% fee
+          <div className="hidden md:flex items-center gap-3 text-[11px] text-gray-500">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 live-dot" />
+              Mainnet
+            </span>
+            <span className="text-white/20">·</span>
+            <span>1% fee</span>
+            <span className="text-white/20">·</span>
+            <span>Non-custodial</span>
           </div>
-          <WalletMultiButton className="!bg-violet-600 hover:!bg-violet-500 !rounded-lg !h-9 !text-sm" />
+          <WalletMultiButton />
         </div>
       </header>
 
-      <div className="border-b border-gray-800/60 bg-[#0d0e14] px-4 py-2 flex gap-6 text-xs text-gray-400 overflow-x-auto">
-        <span>
-          <span className="text-emerald-400 font-medium">Live</span> DexScreener
+      <div className="border-b border-white/[0.05] bg-black/20 px-4 py-2 flex gap-5 text-[11px] text-gray-500 overflow-x-auto">
+        <span className="flex items-center gap-1.5 shrink-0">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="text-emerald-400/90 font-medium">Live</span>
+          <span>DexScreener</span>
         </span>
-        <span>
-          <span className="text-violet-400 font-medium">Jupiter</span> swaps
+        <span className="shrink-0">
+          <span className="text-violet-400 font-medium">Jupiter</span> routes
         </span>
-        <span>
-          <span className="text-sky-400 font-medium">6</span> bot strategies
+        <span className="shrink-0">
+          <span className="text-sky-400 font-medium">6</span> strategies
         </span>
-        <span>
-          <span className="text-amber-400 font-medium">1%</span> protocol fee
+        <span className="shrink-0">
+          <span className="text-amber-400 font-medium">α</span> fee router
         </span>
       </div>
 
-      <main className="flex h-[calc(100vh-96px)]">
-        <div className="flex-1 overflow-hidden">
+      <main className="flex h-[calc(100vh-89px)]">
+        <div className="flex-1 overflow-hidden min-w-0">
           {tab === "market" && (
             <MarketBoard onSelect={setSelectedToken} selected={selectedToken} />
           )}
@@ -74,7 +95,7 @@ export default function Home() {
         </div>
 
         {selectedToken && tab === "market" && (
-          <div className="w-full max-w-sm border-l border-gray-800 bg-[#0d0e14] overflow-y-auto">
+          <div className="w-full max-w-[360px] border-l border-white/[0.06] bg-[#0c0d12]/95 overflow-y-auto shrink-0">
             <TokenPanel
               mint={selectedToken}
               onClose={() => setSelectedToken(null)}
