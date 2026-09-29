@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import clsx from "clsx";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 const STRATEGIES = [
-  { id: "dca", name: "DCA", desc: "Buy a fixed amount on a schedule. Perfect for accumulating.", strategyId: 0 },
-  { id: "grid", name: "Grid", desc: "Place buy & sell levels across a price range. Harvest volatility.", strategyId: 1 },
-  { id: "infinity", name: "Infinity Grid", desc: "Grid that automatically re-centers as price moves.", strategyId: 2 },
-  { id: "shadow", name: "Shadow", desc: "Mirror a smart-money wallet. Copy trades at your size.", strategyId: 3 },
-  { id: "ladder", name: "Ladder", desc: "Buy the dip with multiple rungs below current price.", strategyId: 4 },
-  { id: "martingale", name: "Martingale", desc: "Double down after dips. High risk, high reward.", strategyId: 5 },
+  { id: "dca", name: "DCA", desc: "Buy a fixed amount on a schedule. Build size without timing.", strategyId: 0, tag: "Core" },
+  { id: "grid", name: "Grid", desc: "Buy & sell levels across a range. Harvest volatility.", strategyId: 1, tag: "Core" },
+  { id: "infinity", name: "Infinity Grid", desc: "Grid that re-centers as price trends.", strategyId: 2, tag: "Adv" },
+  { id: "shadow", name: "Shadow", desc: "Mirror a smart-money wallet at your size.", strategyId: 3, tag: "Copy" },
+  { id: "ladder", name: "Ladder", desc: "Staggered buys below spot. Catch the dip.", strategyId: 4, tag: "Core" },
+  { id: "martingale", name: "Martingale", desc: "Scale in after drops. High risk / reward.", strategyId: 5, tag: "Risk" },
 ];
 
 type Strategy = (typeof STRATEGIES)[number];
@@ -32,11 +32,8 @@ export function BotPanel() {
     setBusy(true);
     setMsg(null);
     try {
-      await new Promise((r) => setTimeout(r, 800));
-      setMsg(
-        `Ready: ${selected.name} bot for ${publicKey.toBase58().slice(0, 8)}… ` +
-          `Deposit ${deposit} SOL. Deploy programs first, then this will sign on-chain.`
-      );
+      await new Promise((r) => setTimeout(r, 700));
+      setMsg(`${selected.name} ready for ${publicKey.toBase58().slice(0, 6)}… · ${deposit} SOL. Deploy programs to sign on-chain.`);
     } catch (e: any) {
       setMsg(e?.message || "Create failed");
     } finally {
@@ -46,128 +43,86 @@ export function BotPanel() {
 
   if (selected) {
     return (
-      <div className="p-6 max-w-lg mx-auto">
-        <button
-          onClick={() => {
-            setSelected(null);
-            setMsg(null);
-          }}
-          className="text-xs text-gray-500 hover:text-violet-300 mb-4"
-        >
-          ← Back
+      <div className="p-5 max-w-md mx-auto">
+        <button onClick={() => { setSelected(null); setMsg(null); }} className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-violet-300 mb-5 transition">
+          <ArrowLeft size={14} /> All strategies
         </button>
-        <h2 className="text-xl font-semibold mb-1">Create {selected.name}</h2>
-        <p className="text-sm text-gray-400 mb-6">{selected.desc}</p>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">Token mint</label>
-            <input
-              value={tokenMint}
-              onChange={(e) => setTokenMint(e.target.value)}
-              placeholder="Paste mint address"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-violet-500"
-            />
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-lg font-semibold tracking-tight">Create {selected.name}</h2>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.05] text-gray-500 uppercase tracking-wide">{selected.tag}</span>
           </div>
-
+          <p className="text-[13px] text-gray-500 leading-relaxed">{selected.desc}</p>
+        </div>
+        <div className="space-y-3.5">
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Deposit (SOL)</label>
-            <input
-              type="number"
-              value={deposit}
-              onChange={(e) => setDeposit(e.target.value)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-            />
+            <label className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5 block">Token mint</label>
+            <input value={tokenMint} onChange={(e) => setTokenMint(e.target.value)} placeholder="Mint address" className="field-input mono" />
           </div>
-
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5 block">Deposit (SOL)</label>
+            <input type="number" value={deposit} onChange={(e) => setDeposit(e.target.value)} className="field-input mono" />
+          </div>
           {selected.id === "dca" && (
             <>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Interval (minutes)</label>
-                <input
-                  type="number"
-                  value={intervalMin}
-                  onChange={(e) => setIntervalMin(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-                />
+                <label className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5 block">Interval (minutes)</label>
+                <input type="number" value={intervalMin} onChange={(e) => setIntervalMin(e.target.value)} className="field-input mono" />
               </div>
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Total cycles</label>
-                <input
-                  type="number"
-                  value={cycles}
-                  onChange={(e) => setCycles(e.target.value)}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500"
-                />
+                <label className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5 block">Total cycles</label>
+                <input type="number" value={cycles} onChange={(e) => setCycles(e.target.value)} className="field-input mono" />
               </div>
             </>
           )}
-
           {selected.id === "shadow" && (
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Target wallet</label>
-              <input
-                value={targetWallet}
-                onChange={(e) => setTargetWallet(e.target.value)}
-                placeholder="Wallet to mirror"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2.5 text-sm font-mono focus:outline-none focus:border-violet-500"
-              />
+              <label className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5 block">Target wallet</label>
+              <input value={targetWallet} onChange={(e) => setTargetWallet(e.target.value)} placeholder="Wallet to mirror" className="field-input mono" />
             </div>
           )}
-
           <button
             onClick={handleCreate}
             disabled={!connected || busy || !tokenMint}
-            className={clsx(
-              "w-full py-3 rounded-lg font-semibold text-sm flex items-center justify-center gap-2",
-              "bg-violet-600 hover:bg-violet-500 text-white disabled:opacity-50"
-            )}
+            className="w-full py-3 rounded-xl font-semibold text-[13px] flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-600/20 disabled:opacity-40 hover:opacity-95 transition"
           >
-            {busy ? (
-              <>
-                <Loader2 size={16} className="animate-spin" /> Creating…
-              </>
-            ) : !connected ? (
-              "Connect wallet"
-            ) : (
-              `Create ${selected.name} bot`
-            )}
+            {busy ? <><Loader2 size={15} className="animate-spin" /> Creating…</> : !connected ? "Connect wallet" : `Create ${selected.name}`}
           </button>
-
-          {msg && <p className="text-xs text-center text-gray-400 break-words">{msg}</p>}
+          {msg && <p className="text-[11px] text-center text-gray-500 break-words leading-relaxed">{msg}</p>}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="text-xl font-semibold mb-1">Bots</h2>
-      <p className="text-sm text-gray-400 mb-6">
-        Non-custodial strategies. Funds stay in your vault. Withdraw anytime.
-      </p>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="p-5 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold tracking-tight">Bots</h2>
+        <p className="text-[13px] text-gray-500 mt-1">Non-custodial strategies. Funds in your vault — withdraw anytime.</p>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {STRATEGIES.map((s) => (
           <button
             key={s.id}
             onClick={() => setSelected(s)}
-            className="text-left p-4 rounded-xl border border-gray-800 bg-[#0d0e14] hover:border-violet-500/50 hover:bg-violet-950/20 transition group"
+            className="text-left p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] hover:border-violet-500/40 hover:bg-violet-500/[0.04] transition group"
           >
-            <div className="font-medium mb-1 group-hover:text-violet-300">{s.name}</div>
-            <div className="text-xs text-gray-500 leading-relaxed">{s.desc}</div>
-            <div className="mt-3 text-[10px] text-gray-600 font-mono">strategy #{s.strategyId}</div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-medium text-[14px] group-hover:text-violet-200 transition">{s.name}</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-gray-600 uppercase tracking-wide">{s.tag}</span>
+            </div>
+            <p className="text-[12px] text-gray-500 leading-relaxed">{s.desc}</p>
+            <div className="mt-3 text-[10px] text-gray-700 mono">#{s.strategyId}</div>
           </button>
         ))}
       </div>
-
-      <div className="mt-10 p-4 rounded-xl border border-gray-800 bg-gray-900/40">
-        <h3 className="text-sm font-medium mb-2">How it works</h3>
-        <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
-          <li>Connect wallet → create bot → deposit into the vault</li>
-          <li>Strategy config is stored on-chain</li>
-          <li>Keeper (or you) executes cycles via Jupiter</li>
-          <li>1% fee via Alpha Fee Router on every fill</li>
+      <div className="mt-8 p-4 rounded-2xl border border-white/[0.05] bg-white/[0.015]">
+        <h3 className="text-[12px] font-medium text-gray-400 mb-2.5 uppercase tracking-wider">Flow</h3>
+        <ol className="text-[12px] text-gray-500 space-y-1.5 list-decimal list-inside leading-relaxed">
+          <li>Connect → create bot → deposit into vault</li>
+          <li>Params stored on-chain</li>
+          <li>Keeper (or you) executes via Jupiter</li>
+          <li>1% fee via Alpha Fee Router</li>
           <li>Withdraw & close anytime</li>
         </ol>
       </div>
