@@ -9,6 +9,8 @@ import { useTokenBalance, useSolBalance } from "../hooks/useTokenBalance";
 import { MINTS } from "../lib/jupiter";
 import clsx from "clsx";
 
+type DeskTab = "MARKET" | "FLOW" | "LIQUIDITY" | "HOLDERS" | "RISK" | "TX" | "EXECUTION";
+
 export function TokenPanel({
   mint,
   pairAddress,
@@ -27,6 +29,7 @@ export function TokenPanel({
   const [slippage, setSlippage] = useState(100);
   const [outPreview, setOutPreview] = useState<string | null>(null);
   const [impact, setImpact] = useState<string | null>(null);
+  const [deskTab, setDeskTab] = useState<DeskTab>("MARKET");
   const { connected } = useWallet();
   const { buyWithSol, sellForSol, previewQuote, loading, error, lastTx, setError } = useSwap();
   const sol = useSolBalance();
@@ -53,10 +56,7 @@ export function TokenPanel({
           }
         } else {
           const raw = Math.floor(val * Math.pow(10, token.decimals));
-          if (raw <= 0) {
-            setOutPreview(null);
-            return;
-          }
+          if (raw <= 0) return;
           const q = await previewQuote(tokenMint, MINTS.SOL, raw);
           if (!cancelled && q) {
             const out = Number(q.outAmount) / LAMPORTS_PER_SOL;
@@ -72,10 +72,7 @@ export function TokenPanel({
       }
     };
     const t = setTimeout(run, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
+    return () => { cancelled = true; clearTimeout(t); };
   }, [amount, side, mint, token.decimals, previewQuote]);
 
   const handleTrade = async () => {
@@ -104,189 +101,97 @@ export function TokenPanel({
     }
   };
 
-  const chartSrc = pairAddress
-    ? `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0`
-    : null;
+  const chartSrc = pairAddress ? `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0` : null;
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 h-12 border-b border-[#1a1a1a]">
         <div className="min-w-0">
-          <div className="mono text-[11px] tracking-wider text-[#ff6b00]">
-            {symbol ? symbol.toUpperCase() : "TRADE"}
-          </div>
-          <div className="mono text-[9px] text-[#3d3d3d] truncate max-w-[200px]">{mint}</div>
+          <div className="mono text-[11px] tracking-wider text-[#ff6b00]">DESK · {symbol ? symbol.toUpperCase() : "TOKEN"}</div>
+          <div className="mono text-[9px] text-[#3d3d3d] truncate max-w-[280px]">{mint}</div>
         </div>
         <div className="flex items-center gap-1">
-          {pairAddress && (
-            <a
-              href={`https://dexscreener.com/solana/${pairAddress}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 text-[#6b6b6b] active:text-[#ff6b00]"
-            >
-              <ExternalLink size={14} />
-            </a>
-          )}
-          <button onClick={onClose} className="p-2 text-[#6b6b6b] active:text-[#ececec]">
-            <X size={16} />
-          </button>
+          {pairAddress && <a href={`https://dexscreener.com/solana/${pairAddress}`} target="_blank" rel="noopener noreferrer" className="p-2 text-[#6b6b6b]"><ExternalLink size={14} /></a>}
+          <button onClick={onClose} className="p-2 text-[#6b6b6b]"><X size={16} /></button>
         </div>
       </div>
 
-      <div className="px-3 py-2 border-b border-[#1a1a1a] mono text-[10px] text-[#6b6b6b] flex justify-between gap-2">
+      <div className="px-3 py-2 border-b border-[#1a1a1a] mono text-[10px] text-[#6b6b6b] flex justify-between">
         <span>SOL {sol.balance.toFixed(4)}</span>
-        <span>
-          TOK{" "}
-          {token.loading
-            ? "…"
-            : token.balance.toLocaleString(undefined, { maximumFractionDigits: 4 })}
-        </span>
+        <span>TOK {token.loading ? "…" : token.balance.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
       </div>
 
       <div className="h-40 sm:h-44 border-b border-[#1a1a1a] bg-[#050505] relative">
-        {chartSrc ? (
-          <iframe title="chart" src={chartSrc} className="w-full h-full border-0" allow="clipboard-write" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center mono text-[9px] text-[#3d3d3d] tracking-widest">
-            NO PAIR · CHART UNAVAILABLE
+        {chartSrc ? <iframe title="chart" src={chartSrc} className="w-full h-full border-0" allow="clipboard-write" /> : <div className="absolute inset-0 flex items-center justify-center mono text-[9px] text-[#3d3d3d] tracking-widest">NO PAIR · CHART UNAVAILABLE</div>}
+      </div>
+
+      <div className="flex overflow-x-auto border-b border-[#1a1a1a]">
+        {(["MARKET", "FLOW", "LIQUIDITY", "HOLDERS", "RISK", "TX", "EXECUTION"] as DeskTab[]).map((item) => (
+          <button key={item} onClick={() => setDeskTab(item)} className={clsx("shrink-0 px-2.5 py-2 mono text-[9px] tracking-wide border-b-2", deskTab === item ? "border-[#ff6b00] text-[#ff6b00]" : "border-transparent text-[#4a4a4a]")}>{item}</button>
+        ))}
+      </div>
+
+      {deskTab !== "EXECUTION" ? (
+        <div className="flex-1 overflow-y-auto">
+          <section className="grid grid-cols-2 gap-px bg-[#1a1a1a]">
+            {deskMetrics(deskTab).map(([label, value]) => (
+              <div key={label} className="bg-[#0a0a0a] p-3">
+                <div className="mono text-[8px] text-[#3d3d3d] tracking-wider">{label}</div>
+                <div className="mono text-[11px] mt-2 text-[#6b6b6b]">{value}</div>
+              </div>
+            ))}
+          </section>
+          <div className="m-3 border border-[#1a1a1a] p-3">
+            <div className="mono text-[9px] text-[#4a4a4a]">SOURCE STATUS</div>
+            <div className="mono text-[10px] mt-2 text-[#6b6b6b]">Live market data is available. This panel does not invent holder, creator, flow or transaction intelligence when the upstream indexer is unavailable.</div>
           </div>
-        )}
-      </div>
-
-      <div className="p-3 space-y-3 flex-1 overflow-y-auto">
-        <div className="grid grid-cols-2 border border-[#1a1a1a]">
-          <button
-            onClick={() => {
-              setSide("buy");
-              setAmount("0.1");
-            }}
-            className={clsx(
-              "py-3 mono text-[12px] tracking-wider transition",
-              side === "buy"
-                ? "bg-[#ff6b00] text-[#050505] font-semibold"
-                : "text-[#6b6b6b] active:text-[#ececec]"
-            )}
-          >
-            BUY
-          </button>
-          <button
-            onClick={() => {
-              setSide("sell");
-              setAmount(token.balance > 0 ? String(token.balance) : "0");
-            }}
-            className={clsx(
-              "py-3 mono text-[12px] tracking-wider transition border-l border-[#1a1a1a]",
-              side === "sell"
-                ? "bg-[#ff3d57] text-white font-semibold"
-                : "text-[#6b6b6b] active:text-[#ececec]"
-            )}
-          >
-            SELL
-          </button>
         </div>
-
-        <div>
-          <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-1.5 flex justify-between">
-            <span>AMOUNT · {side === "buy" ? "SOL" : "TOKEN"}</span>
-            {outPreview && (
-              <span className="text-[#6b6b6b] normal-case tracking-normal">{outPreview}</span>
-            )}
+      ) : (
+        <div className="p-3 space-y-3 flex-1 overflow-y-auto">
+          <div className="grid grid-cols-2 border border-[#1a1a1a]">
+            <button onClick={() => { setSide("buy"); setAmount("0.1"); }} className={clsx("py-3 mono text-[12px] tracking-wider", side === "buy" ? "bg-[#ff6b00] text-[#050505] font-semibold" : "text-[#6b6b6b]")}>BUY</button>
+            <button onClick={() => { setSide("sell"); setAmount(token.balance > 0 ? String(token.balance) : "0"); }} className={clsx("py-3 mono text-[12px] tracking-wider border-l border-[#1a1a1a]", side === "sell" ? "bg-[#ff3d57] text-white font-semibold" : "text-[#6b6b6b]")}>SELL</button>
           </div>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="alpha-input"
-            disabled={loading}
-            inputMode="decimal"
-          />
-          {impact && <div className="mono text-[9px] text-[#3d3d3d] mt-1">{impact}</div>}
+
+          <div>
+            <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-1.5 flex justify-between"><span>AMOUNT · {side === "buy" ? "SOL" : "TOKEN"}</span>{outPreview && <span className="text-[#6b6b6b]">{outPreview}</span>}</div>
+            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="alpha-input" disabled={loading} inputMode="decimal" />
+            {impact && <div className="mono text-[9px] text-[#3d3d3d] mt-1">{impact}</div>}
+          </div>
+
+          <div className="grid grid-cols-4 gap-1.5">
+            {(side === "buy" ? ["0.1", "0.5", "1", "MAX"] : ["25%", "50%", "75%", "MAX"]).map((v) => (
+              <button key={v} onClick={() => { if (v === "MAX") setMax(); else if (v.endsWith("%")) setAmount((token.balance * (parseInt(v, 10) / 100)).toString()); else setAmount(v); }} className="py-2.5 mono text-[11px] border border-[#1a1a1a] text-[#6b6b6b]" disabled={loading}>{v}</button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="mono text-[9px] text-[#3d3d3d] tracking-wider shrink-0">SLIP</span>
+            {[50, 100, 300, 500].map((bps) => <button key={bps} onClick={() => setSlippage(bps)} className={clsx("flex-1 py-2 mono text-[11px] border", slippage === bps ? "border-[#ff6b00] text-[#ff6b00]" : "border-[#1a1a1a] text-[#6b6b6b]")}>{bps / 100}%</button>)}
+          </div>
+
+          <button onClick={handleTrade} disabled={!connected || loading} className={clsx("w-full py-3.5 mono text-[13px] font-semibold tracking-wider disabled:opacity-40", side === "buy" ? "bg-[#ff6b00] text-[#050505]" : "bg-[#ff3d57] text-white")}>
+            {loading ? <span className="inline-flex items-center gap-2 justify-center"><Loader2 size={14} className="animate-spin" /> EXECUTING</span> : !connected ? "CONNECT WALLET" : `${side === "buy" ? "BUY" : "SELL"} · ${slippage / 100}% SLIP`}
+          </button>
+
+          {error && <p className="mono text-[10px] text-[#ff3d57] text-center break-all">{error}</p>}
+          {lastTx && <a href={`https://solscan.io/tx/${lastTx}`} target="_blank" rel="noopener noreferrer" className="block mono text-[10px] text-[#ff6b00] text-center">TX → SOLSCAN</a>}
+
+          <div className="border-t border-[#1a1a1a] pt-3">
+            <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-2">BOT SHORTCUTS</div>
+            <div className="grid grid-cols-2 gap-1.5">{["DCA", "GRID", "SHADOW", "LADDER"].map((b) => <button key={b} onClick={onOpenBot} className="py-2.5 mono text-[11px] border border-[#1a1a1a] text-[#6b6b6b]">{b}</button>)}</div>
+          </div>
         </div>
-
-        <div className="grid grid-cols-4 gap-1.5">
-          {(side === "buy" ? ["0.1", "0.5", "1", "MAX"] : ["25%", "50%", "75%", "MAX"]).map((v) => (
-            <button
-              key={v}
-              onClick={() => {
-                if (v === "MAX") setMax();
-                else if (v.endsWith("%")) {
-                  const pct = parseInt(v, 10) / 100;
-                  setAmount((token.balance * pct).toString());
-                } else setAmount(v);
-              }}
-              className="py-2.5 mono text-[11px] border border-[#1a1a1a] text-[#6b6b6b] active:border-[#ff6b00] active:text-[#ff6b00] transition"
-              disabled={loading}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <span className="mono text-[9px] text-[#3d3d3d] tracking-wider shrink-0">SLIP</span>
-          {[50, 100, 300, 500].map((bps) => (
-            <button
-              key={bps}
-              onClick={() => setSlippage(bps)}
-              className={clsx(
-                "flex-1 py-2 mono text-[11px] border transition",
-                slippage === bps
-                  ? "border-[#ff6b00] text-[#ff6b00]"
-                  : "border-[#1a1a1a] text-[#6b6b6b]"
-              )}
-            >
-              {bps / 100}%
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={handleTrade}
-          disabled={!connected || loading}
-          className={clsx(
-            "w-full py-3.5 mono text-[13px] font-semibold tracking-wider transition disabled:opacity-40",
-            side === "buy" ? "bg-[#ff6b00] text-[#050505]" : "bg-[#ff3d57] text-white"
-          )}
-        >
-          {loading ? (
-            <span className="inline-flex items-center gap-2 justify-center">
-              <Loader2 size={14} className="animate-spin" /> EXECUTING
-            </span>
-          ) : !connected ? (
-            "CONNECT WALLET"
-          ) : (
-            `${side === "buy" ? "BUY" : "SELL"} · ${slippage / 100}% SLIP`
-          )}
-        </button>
-
-        {error && <p className="mono text-[10px] text-[#ff3d57] text-center break-all">{error}</p>}
-        {lastTx && (
-          <a
-            href={`https://solscan.io/tx/${lastTx}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block mono text-[10px] text-[#ff6b00] text-center"
-          >
-            TX → SOLSCAN
-          </a>
-        )}
-      </div>
-
-      <div className="border-t border-[#1a1a1a] p-3 pb-6">
-        <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-2">BOTS · PREVIEW</div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {["DCA", "GRID", "SHADOW", "LADDER"].map((b) => (
-            <button
-              key={b}
-              onClick={onOpenBot}
-              className="py-2.5 mono text-[11px] border border-[#1a1a1a] text-[#6b6b6b] active:border-[#ff6b00] active:text-[#ff6b00] transition"
-            >
-              {b}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
+}
+
+function deskMetrics(tab: DeskTab): [string, string][] {
+  if (tab === "MARKET") return [["PRICE", "Live from market feed"], ["24H", "Live from market feed"], ["MARKET CAP", "Live from market feed"], ["AGE", "Live from market feed"]];
+  if (tab === "FLOW") return [["BUY / SELL", "Indexer required"], ["VOLUME QUALITY", "Indexer required"], ["LARGE TRADES", "Indexer required"], ["FLOW TREND", "Indexer required"]];
+  if (tab === "LIQUIDITY") return [["DEPTH", "Indexer required"], ["POOL LIQUIDITY", "Market feed"], ["IMPACT", "Quote preview"], ["LP RISK", "Indexer required"]];
+  if (tab === "HOLDERS") return [["HOLDERS", "Indexer required"], ["TOP 10", "Indexer required"], ["CONCENTRATION", "Indexer required"], ["DISTRIBUTION", "Indexer required"]];
+  if (tab === "RISK") return [["CONTRACT", "Indexer required"], ["MINT AUTH", "Indexer required"], ["FREEZE AUTH", "Indexer required"], ["RISK FLAGS", "Indexer required"]];
+  return [["RECENT TX", "Indexer required"], ["SWAPS", "Indexer required"], ["TRANSFERS", "Indexer required"], ["WALLETS", "Indexer required"]];
 }
