@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { fetchTrendingTokens, fetchWatchlistTokens, type TokenRow, type Verdict } from "../lib/tokens";
+import {
+  fetchTrendingTokens,
+  fetchWatchlistTokens,
+  type TokenRow,
+  type Verdict,
+} from "../lib/tokens";
 
 type Filter = "TRENDING" | "ALL" | "SAFE" | "FLAGGED" | "BLUE CHIP";
 
@@ -14,11 +19,17 @@ const verdictMark: Record<Verdict, string> = {
   UNKNOWN: "text-[#6b6b6b]",
 };
 
+export type SelectedToken = {
+  mint: string;
+  pairAddress?: string;
+  symbol?: string;
+};
+
 export function MarketBoard({
   onSelect,
   selected,
 }: {
-  onSelect: (mint: string) => void;
+  onSelect: (t: SelectedToken) => void;
   selected: string | null;
 }) {
   const [filter, setFilter] = useState<Filter>("TRENDING");
@@ -26,6 +37,7 @@ export function MarketBoard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [q, setQ] = useState("");
 
   const load = async (mode: Filter) => {
     setLoading(true);
@@ -50,13 +62,22 @@ export function MarketBoard({
     return () => clearInterval(id);
   }, [filter]);
 
-  const filtered = rows.filter((t) => {
-    if (filter === "TRENDING" || filter === "ALL") return true;
-    if (filter === "SAFE") return t.verdict === "SAFE" || t.verdict === "BLUE CHIP";
-    if (filter === "FLAGGED") return t.verdict === "CAUTION" || t.verdict === "DANGER";
-    if (filter === "BLUE CHIP") return t.verdict === "BLUE CHIP";
-    return true;
-  });
+  const filtered = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    return rows.filter((t) => {
+      if (filter === "SAFE" && !(t.verdict === "SAFE" || t.verdict === "BLUE CHIP"))
+        return false;
+      if (filter === "FLAGGED" && !(t.verdict === "CAUTION" || t.verdict === "DANGER"))
+        return false;
+      if (filter === "BLUE CHIP" && t.verdict !== "BLUE CHIP") return false;
+      if (!query) return true;
+      return (
+        t.symbol.toLowerCase().includes(query) ||
+        t.name.toLowerCase().includes(query) ||
+        t.mint.toLowerCase().includes(query)
+      );
+    });
+  }, [rows, filter, q]);
 
   return (
     <div className="flex flex-col h-full">
@@ -77,10 +98,19 @@ export function MarketBoard({
         ))}
         <button
           onClick={() => load(filter)}
-          className="ml-auto px-3 py-2 mono text-[10px] text-[#3d3d3d] hover:text-[#c8ff00]"
+          className="ml-auto px-3 py-2 mono text-[10px] text-[#3d3d3d] hover:text-[#c8ff00] shrink-0"
         >
           {loading ? "..." : updatedAt ? updatedAt.toLocaleTimeString() : "REFRESH"}
         </button>
+      </div>
+
+      <div className="px-3 py-2 border-b border-[#1a1a1a]">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="SEARCH SYMBOL / MINT"
+          className="w-full bg-[#0a0a0a] border border-[#222] px-3 py-2 mono text-[11px] text-[#ececec] outline-none focus:border-[#c8ff00] placeholder:text-[#3d3d3d]"
+        />
       </div>
 
       <div className="grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-1.5 mono text-[9px] tracking-wider text-[#3d3d3d] border-b border-[#1a1a1a] uppercase">
@@ -95,7 +125,9 @@ export function MarketBoard({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {error && <div className="p-6 text-center text-[#ff3d57] mono text-xs">{error}</div>}
+        {error && (
+          <div className="p-6 text-center text-[#ff3d57] mono text-xs">{error}</div>
+        )}
         {!error && loading && rows.length === 0 && (
           <div className="p-10 text-center mono text-[11px] text-[#3d3d3d]">LOADING FEED...</div>
         )}
@@ -105,7 +137,9 @@ export function MarketBoard({
         {filtered.map((t) => (
           <button
             key={t.mint}
-            onClick={() => onSelect(t.mint)}
+            onClick={() =>
+              onSelect({ mint: t.mint, pairAddress: t.pairAddress, symbol: t.symbol })
+            }
             className={clsx(
               "row w-full grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-2 text-left border-b border-[#111]",
               selected === t.mint && "active"
@@ -126,8 +160,14 @@ export function MarketBoard({
               {t.verdict === "BLUE CHIP" ? "BLUE" : t.verdict}
             </div>
             <div className="text-right mono text-[11px] self-center">{t.price}</div>
-            <div className={clsx("text-right mono text-[11px] self-center", t.change24h >= 0 ? "text-[#00e676]" : "text-[#ff3d57]")}>
-              {t.change24h >= 0 ? "+" : ""}{t.change24h.toFixed(1)}%
+            <div
+              className={clsx(
+                "text-right mono text-[11px] self-center",
+                t.change24h >= 0 ? "text-[#00e676]" : "text-[#ff3d57]"
+              )}
+            >
+              {t.change24h >= 0 ? "+" : ""}
+              {t.change24h.toFixed(1)}%
             </div>
             <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.mcap}</div>
             <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.liq}</div>
