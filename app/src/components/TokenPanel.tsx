@@ -192,6 +192,31 @@ export function TokenPanel({
   );
 }
 
+function DeskIntel({ tab, data }: { tab: DeskTab; data: any }) {
+  const events = data?.events ?? [];
+  const swaps = events.filter((e: any) => e.kind === "SWAP");
+  const buys = swaps.filter((e: any) => e.side === "BUY").length;
+  const sells = swaps.filter((e: any) => e.side === "SELL").length;
+  const authority = events.find((e: any) => e.kind === "AUTHORITY");
+  const meta = authority?.metadata ?? {};
+  const pair = events.find((e: any) => e.kind === "NEW_PAIR");
+  const pairMeta = pair?.metadata ?? {};
+  const usd = (n: any) => !Number.isFinite(Number(n)) ? "—" : Number(n) >= 1e6 ? `${(Number(n)/1e6).toFixed(2)}M` : Number(n) >= 1e3 ? `${(Number(n)/1e3).toFixed(1)}K` : `${Number(n).toFixed(0)}`;
+  let rows: [string,string][] = [];
+  let note = "Derived from normalized events currently indexed for this mint.";
+  if (tab === "MARKET") rows = [["PRICE", pair?.priceUsd ? `${Number(pair.priceUsd).toPrecision(5)}` : "Market feed"],["24H", pairMeta.change24h != null ? `${Number(pairMeta.change24h).toFixed(2)}%` : "Market feed"],["MARKET CAP", usd(pairMeta.marketCap)],["LIQUIDITY", usd(pair?.liquidityUsd)]];
+  if (tab === "FLOW") rows = [["BUY EVENTS",String(buys)],["SELL EVENTS",String(sells)],["SWAP EVENTS",String(swaps.length)],["FLOW BIAS", buys+sells ? buys>sells ? "BUY OBSERVED" : sells>buys ? "SELL OBSERVED" : "BALANCED" : "NO SWAPS INDEXED"]];
+  if (tab === "LIQUIDITY") rows = [["POOL LIQUIDITY",usd(pair?.liquidityUsd)],["24H VOLUME",usd(pairMeta.volume24h)],["PAIR",pair?.pairAddress ? pair.pairAddress.slice(0,8)+"…" : "—"],["DEPTH",pair?.liquidityUsd ? "OBSERVED" : "INDEXER REQUIRED"]];
+  if (tab === "HOLDERS") { rows = [["HOLDER COUNT","INDEXER REQUIRED"],["TOP 10","INDEXER REQUIRED"],["CONCENTRATION","INDEXER REQUIRED"],["DISTRIBUTION","INDEXER REQUIRED"]]; note = "Holder distribution requires token-account indexing; it is not inferred from swap count."; }
+  if (tab === "RISK") rows = [["MINT AUTH",meta.mintAuthorityRevoked === true ? "REVOKED" : meta.mintAuthorityRevoked === false ? "ACTIVE" : "INDEXER REQUIRED"],["FREEZE AUTH",meta.freezeAuthorityRevoked === true ? "REVOKED" : meta.freezeAuthorityRevoked === false ? "ACTIVE" : "INDEXER REQUIRED"],["TOKEN PROGRAM",meta.tokenProgram ? String(meta.tokenProgram).slice(0,16)+"…" : "INDEXER REQUIRED"],["RISK FLAGS",meta.mintAuthorityRevoked === true && meta.freezeAuthorityRevoked === true ? "AUTHORITIES REVOKED" : "REVIEW"]];
+  if (tab === "TX") rows = [["SWAPS",String(swaps.length)],["BUYS",String(buys)],["SELLS",String(sells)],["SIGNATURES",swaps.some((e:any)=>e.signature) ? "AVAILABLE" : "INDEXER REQUIRED"]];
+  return <div className="flex-1 overflow-y-auto">
+    <section className="grid grid-cols-2 gap-px bg-[#1a1a1a]">{rows.map(([label,value]) => <div key={label} className="bg-[#0a0a0a] p-3"><div className="mono text-[8px] text-[#3d3d3d] tracking-wider">{label}</div><div className="mono text-[11px] mt-2 text-[#bdbdbd]">{value}</div></div>)}</section>
+    {tab === "TX" && swaps.length > 0 && <div className="m-3 border border-[#1a1a1a]">{swaps.slice(0,20).map((e:any) => <div key={e.id} className="flex justify-between border-b border-[#111] px-3 py-2 mono text-[9px]"><span className={e.side==="BUY" ? "text-[#22c55e]" : e.side==="SELL" ? "text-[#ff3d57]" : "text-[#888]"}>{e.side}</span><span className="text-[#555]">{e.wallet ? e.wallet.slice(0,6)+"…"+e.wallet.slice(-4) : "—"}</span><span className="text-[#444]">{e.signature ? e.signature.slice(0,8)+"…" : "—"}</span></div>)}</div>}
+    <div className="m-3 border border-[#1a1a1a] p-3"><div className="mono text-[9px] text-[#4a4a4a]">DATA STATUS</div><div className="mono mt-2 text-[10px] text-[#666]">{note}</div></div>
+  </div>;
+}
+
 function deskMetrics(tab: DeskTab): [string, string][] {
   if (tab === "MARKET") return [["PRICE", "Live from market feed"], ["24H", "Live from market feed"], ["MARKET CAP", "Live from market feed"], ["AGE", "Live from market feed"]];
   if (tab === "FLOW") return [["BUY / SELL", "Indexer required"], ["VOLUME QUALITY", "Indexer required"], ["LARGE TRADES", "Indexer required"], ["FLOW TREND", "Indexer required"]];
