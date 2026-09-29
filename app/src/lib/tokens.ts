@@ -18,6 +18,7 @@ export interface TokenRow {
   age: string;
   imageUrl?: string;
   pairUrl?: string;
+  pairAddress?: string;
 }
 
 const BLUE_CHIPS = new Set([
@@ -79,61 +80,52 @@ interface DexPair {
   url?: string;
   baseToken: { address: string; name: string; symbol: string };
   priceUsd?: string;
-  priceChange?: { h24?: number };
   liquidity?: { usd?: number };
   volume?: { h24?: number };
-  fdv?: number;
+  priceChange?: { h24?: number };
   marketCap?: number;
+  fdv?: number;
   pairCreatedAt?: number;
   info?: { imageUrl?: string };
 }
 
 function pairToRow(p: DexPair): TokenRow | null {
   if (p.chainId !== "solana") return null;
-  const mint = p.baseToken?.address;
-  if (!mint) return null;
+  const mint = p.baseToken.address;
   const price = parseFloat(p.priceUsd || "0");
-  const change = p.priceChange?.h24 ?? 0;
   const liq = p.liquidity?.usd ?? 0;
-  const vol = p.volume?.h24 ?? 0;
-  const mcap = p.marketCap ?? p.fdv ?? 0;
-
+  const change = p.priceChange?.h24 ?? 0;
   return {
     mint,
-    symbol: p.baseToken.symbol || "???",
-    name: p.baseToken.name || p.baseToken.symbol || "Unknown",
+    symbol: p.baseToken.symbol,
+    name: p.baseToken.name,
     verdict: guessVerdict(mint, liq, change),
     price: fmtPrice(price),
     priceRaw: price,
     change24h: change,
-    mcap: fmtUsd(mcap),
+    mcap: fmtUsd(p.marketCap ?? p.fdv),
     liq: fmtUsd(liq),
-    vol: fmtUsd(vol),
+    vol: fmtUsd(p.volume?.h24),
     age: ageFromMs(p.pairCreatedAt),
     imageUrl: p.info?.imageUrl,
     pairUrl: p.url,
+    pairAddress: p.pairAddress,
   };
 }
 
 export async function fetchWatchlistTokens(): Promise<TokenRow[]> {
-  const url = `https://api.dexscreener.com/latest/dex/tokens/${WATCHLIST.join(",")}`;
-  const res = await fetch(url).catch(() => null);
-  if (!res || !res.ok) return fallbackRows();
-
+  const ids = WATCHLIST.join(",");
+  const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ids}`);
+  if (!res.ok) return fallbackRows();
   const data = await res.json();
   const pairs: DexPair[] = data.pairs || [];
-
   const best = new Map<string, DexPair>();
   for (const p of pairs) {
     if (p.chainId !== "solana") continue;
-    const mint = p.baseToken?.address;
-    if (!mint) continue;
+    const mint = p.baseToken.address;
     const prev = best.get(mint);
-    if (!prev || (p.liquidity?.usd || 0) > (prev.liquidity?.usd || 0)) {
-      best.set(mint, p);
-    }
+    if (!prev || (p.liquidity?.usd ?? 0) > (prev.liquidity?.usd ?? 0)) best.set(mint, p);
   }
-
   const rows: TokenRow[] = [];
   for (const mint of WATCHLIST) {
     const p = best.get(mint);
@@ -147,41 +139,33 @@ export async function fetchWatchlistTokens(): Promise<TokenRow[]> {
 
 export async function fetchTrendingTokens(limit = 20): Promise<TokenRow[]> {
   try {
-    const boostRes = await fetch("https://api.dexscreener.com/token-boosts/top/v1");
-    if (!boostRes.ok) return fetchWatchlistTokens();
-    const boosts = await boostRes.json();
-    const solBoosts = (boosts || [])
-      .filter((b: any) => b.chainId === "solana")
-      .slice(0, limit);
-    const mints = solBoosts.map((b: any) => b.tokenAddress).filter(Boolean);
-    if (!mints.length) return fetchWatchlistTokens();
-
-    const url = `https://api.dexscreener.com/latest/dex/tokens/${mints.slice(0, 30).join(",")}`;
-    const res = await fetch(url);
-    if (!res.ok) return fetchWatchlistTokens();
-    const data = await res.json();
+    const res = await fetch("https://api.dexscreener.com/token-boosts/top/v1");
+    if (!res.ok) throw new Error("boosts failed");
+    const boosts = await res.json();
+    const sol = (boosts as any[])
+      .filter((b) => b.chainId === "solana")
+      .slice(0, limit)
+      .map((b) => b.tokenAddress as string);
+    if (!sol.length) throw new Error("empty");
+    const res2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${sol.join(",")}`);
+    const data = await res2.json();
     const pairs: DexPair[] = data.pairs || [];
-
     const best = new Map<string, DexPair>();
     for (const p of pairs) {
       if (p.chainId !== "solana") continue;
-      const mint = p.baseToken?.address;
-      if (!mint) continue;
+      const mint = p.baseToken.address;
       const prev = best.get(mint);
-      if (!prev || (p.liquidity?.usd || 0) > (prev.liquidity?.usd || 0)) {
-        best.set(mint, p);
-      }
+      if (!prev || (p.liquidity?.usd ?? 0) > (prev.liquidity?.usd ?? 0)) best.set(mint, p);
     }
-
     const rows: TokenRow[] = [];
-    for (const mint of mints) {
+    for (const mint of sol) {
       const p = best.get(mint);
       if (p) {
         const row = pairToRow(p);
         if (row) rows.push(row);
       }
     }
-    return rows.length ? rows : fetchWatchlistTokens();
+    return rows.length ? rows : fallbackRows();
   } catch {
     return fetchWatchlistTokens();
   }
