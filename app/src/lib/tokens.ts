@@ -137,6 +137,35 @@ export async function fetchWatchlistTokens(): Promise<TokenRow[]> {
   return rows.length ? rows : fallbackRows();
 }
 
+export async function fetchFirehoseTokens(limit = 30): Promise<TokenRow[]> {
+  try {
+    // DexScreener search gives us a broad, public market stream without inventing events.
+    // We use several high-signal Solana queries and deduplicate by mint.
+    const queries = ["solana", "pump", "ai", "meme"];
+    const responses = await Promise.all(
+      queries.map((q) => fetch(`https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(q)}`))
+    );
+    const best = new Map<string, DexPair>();
+    for (const res of responses) {
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const p of (data.pairs || []) as DexPair[]) {
+        if (p.chainId !== "solana") continue;
+        const mint = p.baseToken.address;
+        const prev = best.get(mint);
+        if (!prev || (p.pairCreatedAt ?? 0) > (prev.pairCreatedAt ?? 0)) best.set(mint, p);
+      }
+    }
+    return [...best.values()]
+      .sort((a, b) => (b.pairCreatedAt ?? 0) - (a.pairCreatedAt ?? 0))
+      .slice(0, limit)
+      .map(pairToRow)
+      .filter((x): x is TokenRow => Boolean(x));
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchTrendingTokens(limit = 20): Promise<TokenRow[]> {
   try {
     const res = await fetch("https://api.dexscreener.com/token-boosts/top/v1");
