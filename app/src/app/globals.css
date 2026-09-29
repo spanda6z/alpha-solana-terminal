@@ -1,95 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   color-scheme: dark;
-  --bg: #07080c;
-  --panel: #0c0d12;
-  --panel-2: #101118;
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.1);
-  --accent: #8b5cf6;
-  --accent-soft: rgba(139, 92, 246, 0.15);
-  --green: #34d399;
-  --red: #f87171;
-  --amber: #fbbf24;
-  --sky: #38bdf8;
+  --bg: #050505;
+  --surface: #0a0a0a;
+  --line: #1a1a1a;
+  --line-2: #222;
+  --text: #ececec;
+  --muted: #6b6b6b;
+  --dim: #3d3d3d;
+  --accent: #c8ff00;
+  --buy: #00e676;
+  --sell: #ff3d57;
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; }
+html, body { height: 100%; margin: 0; }
 
 body {
   background: var(--bg);
-  color: #e8eaef;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
-.alpha-bg {
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.12), transparent),
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 100% 100%, 48px 48px, 48px 48px;
-}
-
-.glass {
-  background: rgba(12, 13, 18, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
 .mono {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   font-variant-numeric: tabular-nums;
 }
 
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+::-webkit-scrollbar-thumb { background: #2a2a2a; }
+
+.row:hover { background: #0c0c0c; }
+.row.active {
+  background: #0c0c0c;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
 
 .wallet-adapter-button {
-  background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
-  border-radius: 10px !important;
-  height: 36px !important;
-  font-size: 13px !important;
+  background: var(--accent) !important;
+  color: #050505 !important;
+  border-radius: 2px !important;
+  height: 32px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
+  font-family: "IBM Plex Mono", monospace !important;
+  padding: 0 14px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
 }
-.wallet-adapter-button:hover { opacity: 0.92 !important; }
+.wallet-adapter-button:hover { filter: brightness(1.08) !important; }
 .wallet-adapter-button-trigger {
-  background: linear-gradient(135deg, #7c3aed, #a855f7) !important;
+  background: var(--accent) !important;
+  color: #050505 !important;
 }
 
-.token-row { transition: background 0.12s ease; }
-.token-row:hover { background: rgba(255, 255, 255, 0.03); }
-.token-row.selected {
-  background: rgba(139, 92, 246, 0.1);
-  box-shadow: inset 2px 0 0 #8b5cf6;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-.live-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
-
-.field-input {
+input.alpha-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 0.7rem 0.9rem;
+  background: #0a0a0a;
+  border: 1px solid var(--line-2);
+  border-radius: 2px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
-  color: #e8eaef;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.field-input:focus {
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.2);
-}
-.field-input::placeholder { color: #4b5563; }
+input.alpha-input:focus { border-color: var(--accent); }
+input.alpha-input::placeholder { color: var(--dim); }
