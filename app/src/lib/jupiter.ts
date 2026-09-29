@@ -1,6 +1,5 @@
 /**
- * Jupiter integration helpers for Alpha
- * Uses the Jupiter Quote + Swap API (v6)
+ * Jupiter Quote + Swap (v6)
  */
 
 import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
@@ -32,14 +31,14 @@ export async function getQuote(params: QuoteParams): Promise<QuoteResponse> {
   const search = new URLSearchParams({
     inputMint: params.inputMint,
     outputMint: params.outputMint,
-    amount: params.amount.toString(),
+    amount: Math.floor(params.amount).toString(),
     slippageBps: (params.slippageBps ?? 100).toString(),
     onlyDirectRoutes: (params.onlyDirectRoutes ?? false).toString(),
   });
 
   const res = await fetch(`${JUPITER_QUOTE}?${search}`);
   if (!res.ok) {
-    throw new Error(`Jupiter quote failed: ${res.status} ${await res.text()}`);
+    throw new Error(`Quote failed: ${res.status}`);
   }
   return res.json();
 }
@@ -47,7 +46,7 @@ export async function getQuote(params: QuoteParams): Promise<QuoteResponse> {
 export async function getSwapTransaction(
   quote: QuoteResponse,
   userPublicKey: string,
-  prioritizationFeeLamports: number = 10000
+  prioritizationFeeLamports: number = 50_000
 ): Promise<VersionedTransaction> {
   const res = await fetch(JUPITER_SWAP, {
     method: "POST",
@@ -62,7 +61,7 @@ export async function getSwapTransaction(
   });
 
   if (!res.ok) {
-    throw new Error(`Jupiter swap failed: ${res.status} ${await res.text()}`);
+    throw new Error(`Swap build failed: ${res.status}`);
   }
 
   const { swapTransaction } = await res.json();
@@ -71,7 +70,7 @@ export async function getSwapTransaction(
 }
 
 export async function prepareSwap(
-  connection: Connection,
+  _connection: Connection,
   user: PublicKey,
   inputMint: PublicKey,
   outputMint: PublicKey,
@@ -84,7 +83,6 @@ export async function prepareSwap(
     amount,
     slippageBps,
   });
-
   const tx = await getSwapTransaction(quote, user.toBase58());
   return { quote, tx };
 }

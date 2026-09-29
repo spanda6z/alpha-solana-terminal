@@ -3,7 +3,7 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { useCallback, useState } from "react";
-import { prepareSwap, MINTS } from "../lib/jupiter";
+import { prepareSwap, getQuote, MINTS } from "../lib/jupiter";
 
 export function useSwap() {
   const { connection } = useConnection();
@@ -23,6 +23,10 @@ export function useSwap() {
         setError("Wallet not connected");
         return null;
       }
+      if (params.amountLamports <= 0) {
+        setError("Amount must be > 0");
+        return null;
+      }
 
       setLoading(true);
       setError(null);
@@ -38,14 +42,21 @@ export function useSwap() {
           params.slippageBps ?? 100
         );
 
-        const sig = await sendTransaction(tx, connection);
+        const sig = await sendTransaction(tx, connection, {
+          skipPreflight: false,
+          maxRetries: 3,
+        });
         await connection.confirmTransaction(sig, "confirmed");
 
         setLastTx(sig);
         return { signature: sig, quote };
       } catch (e: any) {
         console.error(e);
-        setError(e?.message || "Swap failed");
+        const msg =
+          e?.message?.includes("User rejected") || e?.name === "WalletSignTransactionError"
+            ? "Transaction cancelled"
+            : e?.message || "Swap failed";
+        setError(msg);
         return null;
       } finally {
         setLoading(false);
@@ -67,15 +78,32 @@ export function useSwap() {
   );
 
   const sellForSol = useCallback(
-    (tokenMint: PublicKey, tokenAmountRaw: number) => {
+    (tokenMint: PublicKey, tokenAmountRaw: number | bigint) => {
       return swap({
         inputMint: tokenMint,
         outputMint: MINTS.SOL,
-        amountLamports: Math.floor(tokenAmountRaw),
+        amountLamports: Number(tokenAmountRaw),
       });
     },
     [swap]
   );
 
-  return { swap, buyWithSol, sellForSol, loading, error, lastTx };
+  const previewQuote = useCallback(
+    async (inputMint: PublicKey, outputMint: PublicKey, amountRaw: number) => {
+      if (amountRaw <= 0) return null;
+      try {
+        return await getQuote({
+          inputMint: inputMint.toBase58(),
+          outputMint: outputMint.toBase58(),
+          amount: amountRaw,
+          slippageBps: 100,
+        });
+      } catch {
+        return null;
+      }
+    },
+    []
+  );
+
+  return { swap, buyWithSol, sellForSol, previewQuote, loading, error, lastTx, setError };
 }
