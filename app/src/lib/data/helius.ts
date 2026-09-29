@@ -48,3 +48,35 @@ export async function fetchSwapEvents(mints: string[], perMint = 8): Promise<Nor
   const seen = new Set<string>();
   return responses.flat().filter((e) => !seen.has(e.id) && !!seen.add(e.id));
 }
+
+export interface WalletIntel {
+  wallet: string;
+  transactions: number;
+  swaps: number;
+  buys: number;
+  sells: number;
+  tokenMints: string[];
+  recent: Array<{ signature: string; timestamp: number; type: string; description: string }>;
+  indexedAt: number;
+}
+
+export async function fetchWalletIntel(wallet: string, limit = 50): Promise<WalletIntel | null> {
+  const key = process.env.HELIUS_API_KEY;
+  if (!key || !wallet) return null;
+  try {
+    const url = API + "/" + encodeURIComponent(wallet) + "/transactions?api-key=" + encodeURIComponent(key) + "&limit=" + Math.min(100, Math.max(10, limit));
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as HeliusTx[];
+    const swaps = data.filter((tx) => tx.type === "SWAP");
+    const mints = new Set<string>();
+    for (const tx of swaps) for (const transfer of tx.tokenTransfers ?? []) if (transfer.mint) mints.add(transfer.mint);
+    return {
+      wallet, transactions: data.length, swaps: swaps.length,
+      buys: swaps.filter((tx) => side(tx) === "BUY").length,
+      sells: swaps.filter((tx) => side(tx) === "SELL").length,
+      tokenMints: [...mints].slice(0, 50), indexedAt: Date.now(),
+      recent: data.slice(0, 20).map((tx) => ({ signature: tx.signature ?? "", timestamp: (tx.timestamp ?? 0) * 1000, type: tx.type ?? "UNKNOWN", description: tx.description ?? "" })),
+    };
+  } catch { return null; }
+}
