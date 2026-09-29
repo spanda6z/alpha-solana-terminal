@@ -13,13 +13,19 @@
   --text: #ececec;
   --muted: #6b6b6b;
   --dim: #3d3d3d;
-  --accent: #c8ff00;
-  --buy: #00e676;
+  --accent: #ff6b00;
+  --accent-soft: rgba(255, 107, 0, 0.15);
+  --buy: #ff6b00;
   --sell: #ff3d57;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+html, body {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+}
 
 body {
   background: var(--bg);
@@ -27,6 +33,7 @@ body {
   font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .mono {
@@ -38,7 +45,7 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2a2a2a; }
 
-.row:hover { background: #0c0c0c; }
+.row:active, .row:hover { background: #0c0c0c; }
 .row.active {
   background: #0c0c0c;
   box-shadow: inset 3px 0 0 var(--accent);
@@ -47,12 +54,13 @@ body {
 .wallet-adapter-button {
   background: var(--accent) !important;
   color: #050505 !important;
-  border-radius: 2px !important;
-  height: 32px !important;
-  font-size: 12px !important;
+  border-radius: 4px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  font-size: 11px !important;
   font-weight: 600 !important;
   font-family: "IBM Plex Mono", monospace !important;
-  padding: 0 14px !important;
+  padding: 0 12px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.04em !important;
 }
@@ -66,12 +74,25 @@ input.alpha-input {
   width: 100%;
   background: #0a0a0a;
   border: 1px solid var(--line-2);
-  border-radius: 2px;
-  padding: 10px 12px;
+  border-radius: 4px;
+  padding: 12px;
   color: var(--text);
   font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
+  font-size: 16px;
   outline: none;
 }
 input.alpha-input:focus { border-color: var(--accent); }
 input.alpha-input::placeholder { color: var(--dim); }
+
+@media (max-width: 768px) {
+  .trade-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    width: 100% !important;
+    max-width: none !important;
+    border-left: none !important;
+    background: #0a0a0a;
+    padding-bottom: var(--safe-area-bottom);
+  }
+}

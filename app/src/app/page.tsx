@@ -14,14 +14,19 @@ export default function Home() {
   const [selected, setSelected] = useState<SelectedToken | null>(null);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#ececec]">
-      <header className="h-11 border-b border-[#1a1a1a] flex items-center justify-between px-3 bg-[#050505]">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="mono text-[13px] font-semibold tracking-tight text-[#c8ff00]">ALPHA</span>
-            <span className="mono text-[10px] text-[#3d3d3d] uppercase tracking-widest">/ sol</span>
+    <div className="min-h-screen min-h-[100dvh] bg-[#050505] text-[#ececec] flex flex-col">
+      <header className="h-12 shrink-0 border-b border-[#1a1a1a] flex items-center justify-between px-2 sm:px-3 bg-[#050505]">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-7 h-7 rounded-md bg-[#ff6b00] flex items-center justify-center">
+              <span className="mono text-[14px] font-bold text-[#050505] leading-none">α</span>
+            </div>
+            <span className="hidden sm:inline mono text-[13px] font-semibold tracking-tight text-[#ff6b00]">
+              ALPHA
+            </span>
           </div>
-          <nav className="flex items-stretch h-11">
+
+          <nav className="flex items-stretch h-12">
             {(
               [
                 { id: "market", label: "BOARD" },
@@ -31,10 +36,13 @@ export default function Home() {
             ).map((t) => (
               <button
                 key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`px-3 mono text-[11px] tracking-wide border-b-2 transition ${
+                onClick={() => {
+                  setTab(t.id);
+                  if (t.id !== "market") setSelected(null);
+                }}
+                className={`px-2.5 sm:px-3 mono text-[11px] tracking-wide border-b-2 transition ${
                   tab === t.id
-                    ? "border-[#c8ff00] text-[#c8ff00]"
+                    ? "border-[#ff6b00] text-[#ff6b00]"
                     : "border-transparent text-[#6b6b6b] hover:text-[#ececec]"
                 }`}
               >
@@ -43,19 +51,21 @@ export default function Home() {
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden sm:inline mono text-[10px] text-[#3d3d3d]">MAINNET · JUPITER</span>
+
+        <div className="shrink-0">
           <WalletMultiButton />
         </div>
       </header>
 
-      <div className="h-7 border-b border-[#1a1a1a] bg-[#0a0a0a] px-3 flex items-center gap-4 mono text-[10px] text-[#6b6b6b] overflow-x-auto">
-        <span><span className="text-[#c8ff00]">●</span> FEED LIVE</span>
-        <span>DEXSCREENER</span>
-        <span>JUPITER ROUTER</span>
+      <div className="h-7 shrink-0 border-b border-[#1a1a1a] bg-[#0a0a0a] px-3 flex items-center gap-3 mono text-[10px] text-[#6b6b6b] overflow-x-auto">
+        <span className="shrink-0">
+          <span className="text-[#ff6b00]">●</span> LIVE
+        </span>
+        <span className="shrink-0">DEXSCREENER</span>
+        <span className="shrink-0">JUPITER</span>
       </div>
 
-      <main className="flex h-[calc(100vh-76px)]">
+      <main className="flex flex-1 min-h-0 relative">
         <div className="flex-1 min-w-0 overflow-hidden">
           {tab === "market" && (
             <MarketBoard onSelect={setSelected} selected={selected?.mint ?? null} />
@@ -65,7 +75,7 @@ export default function Home() {
         </div>
 
         {selected && tab === "market" && (
-          <div className="w-full max-w-[360px] border-l border-[#1a1a1a] bg-[#0a0a0a] overflow-y-auto shrink-0">
+          <div className="trade-sheet md:relative md:w-full md:max-w-[360px] md:border-l md:border-[#1a1a1a] bg-[#0a0a0a] overflow-y-auto shrink-0">
             <TokenPanel
               mint={selected.mint}
               pairAddress={selected.pairAddress}
