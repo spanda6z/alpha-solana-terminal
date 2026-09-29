@@ -10,36 +10,38 @@ const MOCK_LEADERS = [
 
 export function LeadersPanel() {
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-xl font-semibold mb-1">Smart money</h2>
-      <p className="text-sm text-gray-400 mb-6">
-        Top wallets by 7d PnL on Solana memecoins. Shadow-bot them from the Bots tab.
-      </p>
+    <div className="p-5 max-w-2xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold tracking-tight">Smart money</h2>
+        <p className="text-[13px] text-gray-500 mt-1">
+          Top wallets by 7d PnL. Shadow them from Bots.
+        </p>
+      </div>
 
-      <div className="rounded-xl border border-gray-800 overflow-hidden">
-        <div className="grid grid-cols-[48px_1.4fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-2 text-[11px] text-gray-500 bg-[#0d0e14] border-b border-gray-800">
+      <div className="rounded-2xl border border-white/[0.06] overflow-hidden bg-white/[0.015]">
+        <div className="grid grid-cols-[40px_1.3fr_1fr_0.7fr_0.7fr] gap-2 px-4 py-2.5 text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/[0.05]">
           <div>#</div>
-          <div>WALLET</div>
-          <div className="text-right">7D PNL</div>
-          <div className="text-right">WIN</div>
-          <div className="text-right">TRADES</div>
+          <div>Wallet</div>
+          <div className="text-right">7d PnL</div>
+          <div className="text-right">Win</div>
+          <div className="text-right">Trades</div>
         </div>
         {MOCK_LEADERS.map((r) => (
           <div
             key={r.rank}
-            className="grid grid-cols-[48px_1.4fr_1fr_0.8fr_0.8fr] gap-2 px-4 py-3 text-sm border-b border-gray-800/40 hover:bg-white/[0.02]"
+            className="grid grid-cols-[40px_1.3fr_1fr_0.7fr_0.7fr] gap-2 px-4 py-3 text-[13px] border-b border-white/[0.03] hover:bg-white/[0.02] transition"
           >
-            <div className="text-gray-500">{r.rank}</div>
-            <div className="font-mono text-violet-300">{r.wallet}</div>
-            <div className="text-right text-emerald-400 font-medium">{r.pnl}</div>
-            <div className="text-right text-gray-300">{r.win}</div>
-            <div className="text-right text-gray-400">{r.trades}</div>
+            <div className="text-gray-600 font-medium">{r.rank}</div>
+            <div className="mono text-violet-300/90 text-[12px]">{r.wallet}</div>
+            <div className="text-right mono text-emerald-400 font-medium text-[12px]">{r.pnl}</div>
+            <div className="text-right mono text-gray-400 text-[12px]">{r.win}</div>
+            <div className="text-right mono text-gray-500 text-[12px]">{r.trades}</div>
           </div>
         ))}
       </div>
 
-      <p className="mt-4 text-xs text-gray-500 text-center">
-        Live indexer (Helius / Dune) will replace mock data after deploy.
+      <p className="mt-4 text-[11px] text-gray-600 text-center">
+        Live indexer (Helius / Dune) replaces mock data after deploy
       </p>
     </div>
   );
