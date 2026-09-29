@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { fetchTrendingTokens, fetchWatchlistTokens, type TokenRow, type Verdict } from "../lib/tokens";
 
-type Filter = "ALL" | "SAFE" | "FLAGGED" | "ALIVE" | "BLUE CHIP" | "MY BAG" | "TRENDING";
+type Filter = "TRENDING" | "ALL" | "SAFE" | "FLAGGED" | "BLUE CHIP";
 
-const verdictStyle: Record<Verdict, string> = {
-  "BLUE CHIP": "text-sky-300 bg-sky-400/10 ring-1 ring-sky-400/20",
-  SAFE: "text-emerald-300 bg-emerald-400/10 ring-1 ring-emerald-400/20",
-  CAUTION: "text-amber-300 bg-amber-400/10 ring-1 ring-amber-400/20",
-  DANGER: "text-rose-300 bg-rose-400/10 ring-1 ring-rose-400/20",
-  UNKNOWN: "text-gray-400 bg-white/[0.04] ring-1 ring-white/[0.06]",
+const verdictMark: Record<Verdict, string> = {
+  "BLUE CHIP": "text-[#38bdf8]",
+  SAFE: "text-[#00e676]",
+  CAUTION: "text-[#fbbf24]",
+  DANGER: "text-[#ff3d57]",
+  UNKNOWN: "text-[#6b6b6b]",
 };
 
 export function MarketBoard({
@@ -38,7 +38,7 @@ export function MarketBoard({
       setRows(data);
       setUpdatedAt(new Date());
     } catch (e: any) {
-      setError(e?.message || "Failed to load tokens");
+      setError(e?.message || "Load failed");
     } finally {
       setLoading(false);
     }
@@ -51,98 +51,88 @@ export function MarketBoard({
   }, [filter]);
 
   const filtered = rows.filter((t) => {
-    if (filter === "ALL" || filter === "TRENDING" || filter === "ALIVE") return true;
+    if (filter === "TRENDING" || filter === "ALL") return true;
     if (filter === "SAFE") return t.verdict === "SAFE" || t.verdict === "BLUE CHIP";
     if (filter === "FLAGGED") return t.verdict === "CAUTION" || t.verdict === "DANGER";
     if (filter === "BLUE CHIP") return t.verdict === "BLUE CHIP";
-    if (filter === "MY BAG") return false;
     return true;
   });
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-1.5 px-3 py-2.5 border-b border-white/[0.05] overflow-x-auto">
-        {(["TRENDING", "ALL", "SAFE", "FLAGGED", "ALIVE", "BLUE CHIP", "MY BAG"] as Filter[]).map(
-          (f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={clsx(
-                "px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition",
-                filter === f
-                  ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                  : "bg-white/[0.04] text-gray-500 hover:text-gray-300 hover:bg-white/[0.07]"
-              )}
-            >
-              {f}
-            </button>
-          )
-        )}
+      <div className="flex items-center gap-0 border-b border-[#1a1a1a] px-1 overflow-x-auto">
+        {(["TRENDING", "ALL", "SAFE", "FLAGGED", "BLUE CHIP"] as Filter[]).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={clsx(
+              "px-3 py-2 mono text-[10px] tracking-wider border-b-2 transition shrink-0",
+              filter === f
+                ? "border-[#c8ff00] text-[#c8ff00]"
+                : "border-transparent text-[#6b6b6b] hover:text-[#ececec]"
+            )}
+          >
+            {f}
+          </button>
+        ))}
         <button
           onClick={() => load(filter)}
-          className="ml-auto text-[10px] text-gray-600 hover:text-violet-300 mono shrink-0 px-2"
+          className="ml-auto px-3 py-2 mono text-[10px] text-[#3d3d3d] hover:text-[#c8ff00]"
         >
-          {loading ? "…" : updatedAt ? updatedAt.toLocaleTimeString() : "↻"}
+          {loading ? "..." : updatedAt ? updatedAt.toLocaleTimeString() : "REFRESH"}
         </button>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1.5fr)_0.7fr_0.75fr_0.55fr_0.55fr_0.55fr_0.5fr_0.45fr] gap-1 px-3 py-2 text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/[0.04]">
-        <div>Token</div>
-        <div>Verdict</div>
-        <div className="text-right">Price</div>
-        <div className="text-right">24h</div>
+      <div className="grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-1.5 mono text-[9px] tracking-wider text-[#3d3d3d] border-b border-[#1a1a1a] uppercase">
+        <div>TOKEN</div>
+        <div>FLAG</div>
+        <div className="text-right">PRICE</div>
+        <div className="text-right">24H</div>
         <div className="text-right">MC</div>
-        <div className="text-right">Liq</div>
-        <div className="text-right">Vol</div>
-        <div className="text-right">Age</div>
+        <div className="text-right">LIQ</div>
+        <div className="text-right">VOL</div>
+        <div className="text-right">AGE</div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {error && <div className="p-6 text-sm text-rose-400/90 text-center">{error}</div>}
+        {error && <div className="p-6 text-center text-[#ff3d57] mono text-xs">{error}</div>}
         {!error && loading && rows.length === 0 && (
-          <div className="p-12 text-center">
-            <div className="inline-flex items-center gap-2 text-sm text-gray-500">
-              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 live-dot" />
-              Fetching Solana markets…
-            </div>
-          </div>
+          <div className="p-10 text-center mono text-[11px] text-[#3d3d3d]">LOADING FEED...</div>
         )}
         {!error && !loading && filtered.length === 0 && (
-          <div className="p-12 text-sm text-gray-600 text-center">No tokens match</div>
+          <div className="p-10 text-center mono text-[11px] text-[#3d3d3d]">EMPTY</div>
         )}
         {filtered.map((t) => (
           <button
             key={t.mint}
             onClick={() => onSelect(t.mint)}
             className={clsx(
-              "token-row w-full grid grid-cols-[minmax(0,1.5fr)_0.7fr_0.75fr_0.55fr_0.55fr_0.55fr_0.5fr_0.45fr] gap-1 px-3 py-2.5 text-left border-b border-white/[0.03]",
-              selected === t.mint && "selected"
+              "row w-full grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-2 text-left border-b border-[#111]",
+              selected === t.mint && "active"
             )}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               {t.imageUrl ? (
-                <img src={t.imageUrl} alt="" className="w-7 h-7 rounded-full bg-[#15161c] object-cover ring-1 ring-white/10 shrink-0" />
+                <img src={t.imageUrl} alt="" className="w-5 h-5 rounded-sm bg-[#111] object-cover shrink-0" />
               ) : (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 ring-1 ring-white/10 shrink-0" />
+                <div className="w-5 h-5 rounded-sm bg-[#1a1a1a] shrink-0" />
               )}
               <div className="min-w-0">
-                <div className="font-medium text-[13px] truncate tracking-tight">{t.symbol}</div>
-                <div className="text-[10px] text-gray-600 truncate">{t.name}</div>
+                <div className="mono text-[12px] font-medium truncate">{t.symbol}</div>
+                <div className="mono text-[9px] text-[#3d3d3d] truncate">{t.name}</div>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className={clsx("text-[9px] px-1.5 py-0.5 rounded-md font-semibold tracking-wide", verdictStyle[t.verdict])}>
-                {t.verdict}
-              </span>
+            <div className={clsx("mono text-[9px] self-center tracking-wide", verdictMark[t.verdict])}>
+              {t.verdict === "BLUE CHIP" ? "BLUE" : t.verdict}
             </div>
-            <div className="text-right mono text-[12px] self-center text-gray-200">{t.price}</div>
-            <div className={clsx("text-right mono text-[12px] self-center font-medium", t.change24h >= 0 ? "text-emerald-400" : "text-rose-400")}>
+            <div className="text-right mono text-[11px] self-center">{t.price}</div>
+            <div className={clsx("text-right mono text-[11px] self-center", t.change24h >= 0 ? "text-[#00e676]" : "text-[#ff3d57]")}>
               {t.change24h >= 0 ? "+" : ""}{t.change24h.toFixed(1)}%
             </div>
-            <div className="text-right mono text-[11px] self-center text-gray-500">{t.mcap}</div>
-            <div className="text-right mono text-[11px] self-center text-gray-500">{t.liq}</div>
-            <div className="text-right mono text-[11px] self-center text-gray-500">{t.vol}</div>
-            <div className="text-right mono text-[11px] self-center text-gray-600">{t.age}</div>
+            <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.mcap}</div>
+            <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.liq}</div>
+            <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.vol}</div>
+            <div className="text-right mono text-[10px] self-center text-[#3d3d3d]">{t.age}</div>
           </button>
         ))}
       </div>

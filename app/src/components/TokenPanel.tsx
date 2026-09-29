@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Loader2, ExternalLink, Zap } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSwap } from "../hooks/useSwap";
@@ -32,69 +32,55 @@ export function TokenPanel({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+      <div className="flex items-center justify-between px-3 h-11 border-b border-[#1a1a1a]">
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold tracking-tight">Trade</div>
-          <div className="text-[10px] text-gray-600 mono truncate max-w-[220px] mt-0.5">{mint}</div>
+          <div className="mono text-[11px] tracking-wider text-[#c8ff00]">TRADE</div>
+          <div className="mono text-[9px] text-[#3d3d3d] truncate max-w-[200px]">{mint}</div>
         </div>
-        <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/[0.06] text-gray-500 hover:text-gray-300 transition">
-          <X size={16} />
+        <button onClick={onClose} className="p-1 text-[#6b6b6b] hover:text-[#ececec]">
+          <X size={14} />
         </button>
       </div>
 
-      <div className="h-36 mx-3 mt-3 rounded-xl bg-gradient-to-b from-violet-950/40 via-transparent to-transparent border border-white/[0.05] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-[11px] text-gray-600 uppercase tracking-widest">Chart</div>
-          <div className="text-[10px] text-gray-700 mt-1">Birdeye · Helius</div>
-        </div>
+      <div className="h-28 border-b border-[#1a1a1a] flex items-center justify-center bg-[#050505]">
+        <span className="mono text-[9px] text-[#3d3d3d] tracking-widest">CHART · TBD</span>
       </div>
 
-      <div className="p-4 space-y-3.5">
-        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.05]">
+      <div className="p-3 space-y-3">
+        <div className="grid grid-cols-2 border border-[#1a1a1a]">
           <button
             onClick={() => setSide("buy")}
             className={clsx(
-              "flex-1 py-2 rounded-lg text-[13px] font-semibold transition",
-              side === "buy"
-                ? "bg-emerald-500/90 text-white shadow-lg shadow-emerald-500/15"
-                : "text-gray-500 hover:text-gray-300"
+              "py-2 mono text-[11px] tracking-wider transition",
+              side === "buy" ? "bg-[#00e676] text-[#050505] font-semibold" : "text-[#6b6b6b] hover:text-[#ececec]"
             )}
           >
-            Buy
+            BUY
           </button>
           <button
             onClick={() => setSide("sell")}
             className={clsx(
-              "flex-1 py-2 rounded-lg text-[13px] font-semibold transition",
-              side === "sell"
-                ? "bg-rose-500/90 text-white shadow-lg shadow-rose-500/15"
-                : "text-gray-500 hover:text-gray-300"
+              "py-2 mono text-[11px] tracking-wider transition border-l border-[#1a1a1a]",
+              side === "sell" ? "bg-[#ff3d57] text-white font-semibold" : "text-[#6b6b6b] hover:text-[#ececec]"
             )}
           >
-            Sell
+            SELL
           </button>
         </div>
 
         <div>
-          <label className="text-[10px] uppercase tracking-wider text-gray-600 mb-1.5 block">
-            Amount · {side === "buy" ? "SOL" : "tokens"}
-          </label>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-3.5 py-3 text-sm mono focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition"
-            placeholder="0.0"
-            disabled={loading}
-          />
+          <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-1.5">
+            AMOUNT · {side === "buy" ? "SOL" : "TOKEN"}
+          </div>
+          <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className="alpha-input" disabled={loading} />
         </div>
 
-        <div className="flex gap-1.5">
-          {["0.1", "0.5", "1", "Max"].map((v) => (
+        <div className="grid grid-cols-4 gap-1">
+          {["0.1", "0.5", "1", "MAX"].map((v) => (
             <button
               key={v}
-              onClick={() => setAmount(v === "Max" ? "1.0" : v)}
-              className="flex-1 py-1.5 text-[11px] rounded-lg bg-white/[0.04] border border-white/[0.05] text-gray-400 hover:text-gray-200 hover:bg-white/[0.07] transition"
+              onClick={() => setAmount(v === "MAX" ? "1" : v)}
+              className="py-1.5 mono text-[10px] border border-[#1a1a1a] text-[#6b6b6b] hover:border-[#c8ff00] hover:text-[#c8ff00] transition"
               disabled={loading}
             >
               {v}
@@ -106,41 +92,37 @@ export function TokenPanel({
           onClick={handleTrade}
           disabled={!connected || loading}
           className={clsx(
-            "w-full py-3 rounded-xl font-semibold text-[13px] transition flex items-center justify-center gap-2 disabled:opacity-40",
-            side === "buy"
-              ? "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/20 hover:opacity-95"
-              : "bg-gradient-to-r from-rose-600 to-rose-500 text-white shadow-lg shadow-rose-600/20 hover:opacity-95"
+            "w-full py-2.5 mono text-[12px] font-semibold tracking-wider transition disabled:opacity-40",
+            side === "buy" ? "bg-[#00e676] text-[#050505]" : "bg-[#ff3d57] text-white"
           )}
         >
           {loading ? (
-            <><Loader2 size={15} className="animate-spin" /> Swapping…</>
+            <span className="inline-flex items-center gap-2 justify-center">
+              <Loader2 size={14} className="animate-spin" /> EXECUTING
+            </span>
           ) : !connected ? (
-            "Connect wallet"
+            "CONNECT WALLET"
           ) : (
-            <><Zap size={14} /> {side === "buy" ? "Buy" : "Sell"} · Jupiter</>
+            `${side === "buy" ? "BUY" : "SELL"} VIA JUPITER`
           )}
         </button>
 
-        {error && <p className="text-[11px] text-rose-400 text-center break-all">{error}</p>}
+        {error && <p className="mono text-[10px] text-[#ff3d57] text-center break-all">{error}</p>}
         {lastTx && (
-          <a href={`https://solscan.io/tx/${lastTx}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1 text-[11px] text-violet-400 hover:text-violet-300">
-            View on Solscan <ExternalLink size={11} />
+          <a href={`https://solscan.io/tx/${lastTx}`} target="_blank" rel="noopener noreferrer" className="block mono text-[10px] text-[#c8ff00] text-center hover:underline">
+            TX → SOLSCAN
           </a>
         )}
-
-        <p className="text-[10px] text-gray-600 text-center leading-relaxed">
-          Non-custodial · Jupiter routes · 1% Alpha fee after deploy
-        </p>
       </div>
 
-      <div className="mt-auto border-t border-white/[0.05] p-4">
-        <div className="text-[10px] uppercase tracking-wider text-gray-600 mb-2.5">Automate</div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {["DCA", "Grid", "Shadow", "Ladder"].map((b) => (
+      <div className="mt-auto border-t border-[#1a1a1a] p-3">
+        <div className="mono text-[9px] text-[#3d3d3d] tracking-wider mb-2">BOTS</div>
+        <div className="grid grid-cols-2 gap-1">
+          {["DCA", "GRID", "SHADOW", "LADDER"].map((b) => (
             <button
               key={b}
               onClick={onOpenBot}
-              className="py-2 text-[11px] font-medium rounded-lg bg-white/[0.03] border border-white/[0.05] text-gray-400 hover:text-violet-300 hover:border-violet-500/30 hover:bg-violet-500/5 transition"
+              className="py-2 mono text-[10px] border border-[#1a1a1a] text-[#6b6b6b] hover:border-[#c8ff00] hover:text-[#c8ff00] transition"
             >
               {b}
             </button>
