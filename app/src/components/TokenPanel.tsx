@@ -102,30 +102,20 @@ export function TokenPanel({
   };
 
   const [deskData, setDeskData] = useState<any>(null);
-  const [holderData, setHolderData] = useState<any>(null);
 
   useEffect(() => {
     let cancelled = false;
     async function loadDesk() {
       try {
-        const res = await fetch(`/api/data-layer?limit=100&mint=${encodeURIComponent(mint)}`, { cache: "no-store" });
+        const res = await fetch(`/api/token-desk?mint=${encodeURIComponent(mint)}`, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();
-        const events = (data.events ?? []).filter((e: any) => e.mint === mint);
-        if (!cancelled) setDeskData({ ...data, events });
+        if (!cancelled) setDeskData(data);
       } catch {}
     }
     loadDesk();
-    async function loadHolders() {
-      try {
-        const res = await fetch(`/api/holders?mint=${encodeURIComponent(mint)}`, { cache: "no-store" });
-        if (res.ok) setHolderData((await res.json()).holders);
-      } catch {}
-    }
-    loadHolders();
     const id = setInterval(loadDesk, 30000);
-    const holderId = setInterval(loadHolders, 60000);
-    return () => { cancelled = true; clearInterval(id); clearInterval(holderId); };
+    return () => { cancelled = true; clearInterval(id); };
   }, [mint]);
 
   const chartSrc = pairAddress ? `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0` : null;
@@ -159,7 +149,7 @@ export function TokenPanel({
       </div>
 
       {deskTab !== "EXECUTION" ? (
-        <DeskIntel tab={deskTab} data={deskData} holders={holderData} />
+        <DeskIntel tab={deskTab} data={deskData} holders={deskData?.holders} />
       ) : (
         <div className="p-3 space-y-3 flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 border border-[#1a1a1a]">
