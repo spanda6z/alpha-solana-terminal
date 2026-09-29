@@ -13,7 +13,7 @@ type Filter = "TRENDING" | "ALL" | "SAFE" | "FLAGGED" | "BLUE CHIP";
 
 const verdictMark: Record<Verdict, string> = {
   "BLUE CHIP": "text-[#38bdf8]",
-  SAFE: "text-[#00e676]",
+  SAFE: "text-[#22c55e]",
   CAUTION: "text-[#fbbf24]",
   DANGER: "text-[#ff3d57]",
   UNKNOWN: "text-[#6b6b6b]",
@@ -87,10 +87,10 @@ export function MarketBoard({
             key={f}
             onClick={() => setFilter(f)}
             className={clsx(
-              "px-3 py-2 mono text-[10px] tracking-wider border-b-2 transition shrink-0",
+              "px-2.5 sm:px-3 py-2.5 mono text-[10px] tracking-wider border-b-2 transition shrink-0",
               filter === f
-                ? "border-[#c8ff00] text-[#c8ff00]"
-                : "border-transparent text-[#6b6b6b] hover:text-[#ececec]"
+                ? "border-[#ff6b00] text-[#ff6b00]"
+                : "border-transparent text-[#6b6b6b] active:text-[#ececec]"
             )}
           >
             {f}
@@ -98,22 +98,22 @@ export function MarketBoard({
         ))}
         <button
           onClick={() => load(filter)}
-          className="ml-auto px-3 py-2 mono text-[10px] text-[#3d3d3d] hover:text-[#c8ff00] shrink-0"
+          className="ml-auto px-3 py-2 mono text-[10px] text-[#3d3d3d] active:text-[#ff6b00] shrink-0"
         >
-          {loading ? "..." : updatedAt ? updatedAt.toLocaleTimeString() : "REFRESH"}
+          {loading ? "..." : updatedAt ? updatedAt.toLocaleTimeString() : "↻"}
         </button>
       </div>
 
-      <div className="px-3 py-2 border-b border-[#1a1a1a]">
+      <div className="px-2 sm:px-3 py-2 border-b border-[#1a1a1a]">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="SEARCH SYMBOL / MINT"
-          className="w-full bg-[#0a0a0a] border border-[#222] px-3 py-2 mono text-[11px] text-[#ececec] outline-none focus:border-[#c8ff00] placeholder:text-[#3d3d3d]"
+          className="w-full bg-[#0a0a0a] border border-[#222] px-3 py-2.5 mono text-[14px] sm:text-[11px] text-[#ececec] outline-none focus:border-[#ff6b00] placeholder:text-[#3d3d3d] rounded-sm"
         />
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-1.5 mono text-[9px] tracking-wider text-[#3d3d3d] border-b border-[#1a1a1a] uppercase">
+      <div className="hidden md:grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-1.5 mono text-[9px] tracking-wider text-[#3d3d3d] border-b border-[#1a1a1a] uppercase">
         <div>TOKEN</div>
         <div>FLAG</div>
         <div className="text-right">PRICE</div>
@@ -124,10 +124,14 @@ export function MarketBoard({
         <div className="text-right">AGE</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {error && (
-          <div className="p-6 text-center text-[#ff3d57] mono text-xs">{error}</div>
-        )}
+      <div className="md:hidden grid grid-cols-[minmax(0,1.5fr)_70px_58px] gap-1 px-3 py-1.5 mono text-[9px] tracking-wider text-[#3d3d3d] border-b border-[#1a1a1a] uppercase">
+        <div>TOKEN</div>
+        <div className="text-right">PRICE</div>
+        <div className="text-right">24H</div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto overscroll-contain">
+        {error && <div className="p-6 text-center text-[#ff3d57] mono text-xs">{error}</div>}
         {!error && loading && rows.length === 0 && (
           <div className="p-10 text-center mono text-[11px] text-[#3d3d3d]">LOADING FEED...</div>
         )}
@@ -141,38 +145,54 @@ export function MarketBoard({
               onSelect({ mint: t.mint, pairAddress: t.pairAddress, symbol: t.symbol })
             }
             className={clsx(
-              "row w-full grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-2 text-left border-b border-[#111]",
+              "row w-full text-left border-b border-[#111] active:bg-[#111]",
               selected === t.mint && "active"
             )}
           >
-            <div className="flex items-center gap-2 min-w-0">
-              {t.imageUrl ? (
-                <img src={t.imageUrl} alt="" className="w-5 h-5 rounded-sm bg-[#111] object-cover shrink-0" />
-              ) : (
-                <div className="w-5 h-5 rounded-sm bg-[#1a1a1a] shrink-0" />
-              )}
-              <div className="min-w-0">
-                <div className="mono text-[12px] font-medium truncate">{t.symbol}</div>
-                <div className="mono text-[9px] text-[#3d3d3d] truncate">{t.name}</div>
+            <div className="hidden md:grid grid-cols-[minmax(0,1.6fr)_72px_88px_64px_64px_64px_56px_48px] gap-0 px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                {t.imageUrl ? (
+                  <img src={t.imageUrl} alt="" className="w-5 h-5 rounded-sm bg-[#111] object-cover shrink-0" />
+                ) : (
+                  <div className="w-5 h-5 rounded-sm bg-[#1a1a1a] shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <div className="mono text-[12px] font-medium truncate">{t.symbol}</div>
+                  <div className="mono text-[9px] text-[#3d3d3d] truncate">{t.name}</div>
+                </div>
+              </div>
+              <div className={clsx("mono text-[9px] self-center tracking-wide", verdictMark[t.verdict])}>
+                {t.verdict === "BLUE CHIP" ? "BLUE" : t.verdict}
+              </div>
+              <div className="text-right mono text-[11px] self-center">{t.price}</div>
+              <div className={clsx("text-right mono text-[11px] self-center", t.change24h >= 0 ? "text-[#22c55e]" : "text-[#ff3d57]")}>
+                {t.change24h >= 0 ? "+" : ""}{t.change24h.toFixed(1)}%
+              </div>
+              <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.mcap}</div>
+              <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.liq}</div>
+              <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.vol}</div>
+              <div className="text-right mono text-[10px] self-center text-[#3d3d3d]">{t.age}</div>
+            </div>
+
+            <div className="md:hidden grid grid-cols-[minmax(0,1.5fr)_70px_58px] gap-1 px-3 py-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {t.imageUrl ? (
+                  <img src={t.imageUrl} alt="" className="w-8 h-8 rounded-md bg-[#111] object-cover shrink-0" />
+                ) : (
+                  <div className="w-8 h-8 rounded-md bg-[#1a1a1a] shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <div className="mono text-[13px] font-medium truncate">{t.symbol}</div>
+                  <div className={clsx("mono text-[9px] tracking-wide", verdictMark[t.verdict])}>
+                    {t.verdict === "BLUE CHIP" ? "BLUE" : t.verdict}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right mono text-[12px] self-center">{t.price}</div>
+              <div className={clsx("text-right mono text-[12px] self-center font-medium", t.change24h >= 0 ? "text-[#22c55e]" : "text-[#ff3d57]")}>
+                {t.change24h >= 0 ? "+" : ""}{t.change24h.toFixed(1)}%
               </div>
             </div>
-            <div className={clsx("mono text-[9px] self-center tracking-wide", verdictMark[t.verdict])}>
-              {t.verdict === "BLUE CHIP" ? "BLUE" : t.verdict}
-            </div>
-            <div className="text-right mono text-[11px] self-center">{t.price}</div>
-            <div
-              className={clsx(
-                "text-right mono text-[11px] self-center",
-                t.change24h >= 0 ? "text-[#00e676]" : "text-[#ff3d57]"
-              )}
-            >
-              {t.change24h >= 0 ? "+" : ""}
-              {t.change24h.toFixed(1)}%
-            </div>
-            <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.mcap}</div>
-            <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.liq}</div>
-            <div className="text-right mono text-[10px] self-center text-[#6b6b6b]">{t.vol}</div>
-            <div className="text-right mono text-[10px] self-center text-[#3d3d3d]">{t.age}</div>
           </button>
         ))}
       </div>
