@@ -101,6 +101,24 @@ export function TokenPanel({
     }
   };
 
+  const [deskData, setDeskData] = useState<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadDesk() {
+      try {
+        const res = await fetch(`/api/data-layer?limit=100&mint=${encodeURIComponent(mint)}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const events = (data.events ?? []).filter((e: any) => e.mint === mint);
+        if (!cancelled) setDeskData({ ...data, events });
+      } catch {}
+    }
+    loadDesk();
+    const id = setInterval(loadDesk, 30000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [mint]);
+
   const chartSrc = pairAddress ? `https://dexscreener.com/solana/${pairAddress}?embed=1&theme=dark&trades=0&info=0` : null;
 
   return (
@@ -132,20 +150,7 @@ export function TokenPanel({
       </div>
 
       {deskTab !== "EXECUTION" ? (
-        <div className="flex-1 overflow-y-auto">
-          <section className="grid grid-cols-2 gap-px bg-[#1a1a1a]">
-            {deskMetrics(deskTab).map(([label, value]) => (
-              <div key={label} className="bg-[#0a0a0a] p-3">
-                <div className="mono text-[8px] text-[#3d3d3d] tracking-wider">{label}</div>
-                <div className="mono text-[11px] mt-2 text-[#6b6b6b]">{value}</div>
-              </div>
-            ))}
-          </section>
-          <div className="m-3 border border-[#1a1a1a] p-3">
-            <div className="mono text-[9px] text-[#4a4a4a]">SOURCE STATUS</div>
-            <div className="mono text-[10px] mt-2 text-[#6b6b6b]">Live market data is available. This panel does not invent holder, creator, flow or transaction intelligence when the upstream indexer is unavailable.</div>
-          </div>
-        </div>
+        <DeskIntel tab={deskTab} data={deskData} />
       ) : (
         <div className="p-3 space-y-3 flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 border border-[#1a1a1a]">
