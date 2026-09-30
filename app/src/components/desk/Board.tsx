@@ -60,7 +60,10 @@ export function Board({
   const load = async () => {
     setLoading(true);
     try {
-      const data = q.trim().length > 1 ? await searchTokens(q) : await fetchMarketTokens(80);
+      const data =
+        q.trim().length > 1
+          ? await searchTokens(q)
+          : await fetchMarketTokens(80, mode === "firehose" ? "new" : "trending");
       setRows(data);
     } catch {
       setRows([]);
