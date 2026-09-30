@@ -3,13 +3,12 @@ import "./globals.css";
 import { WalletContextProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
-  title: "SOLBIT — Digital Asset Market Terminal",
-  description:
-    "Read the market before you trade it. Market data, on-chain flow, wallet behavior, risk.",
+  title: "The Desk — Solana",
+  description: "Solana trading terminal. Market, firehose, bots, rap sheet.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23070809' width='32' height='32' rx='4'/><text x='16' y='22' text-anchor='middle' font-size='14' font-family='monospace' font-weight='700' fill='%233d9eff'>SB</text></svg>",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230a0a0b' width='32' height='32'/><text x='16' y='22' text-anchor='middle' font-size='12' font-family='monospace' font-weight='700' fill='%23a3e635'>DK</text></svg>",
   },
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "SOLBIT" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Desk" },
 };
 
 export const viewport: Viewport = {
@@ -17,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#070809",
+  themeColor: "#0a0a0b",
   viewportFit: "cover",
 };
 
