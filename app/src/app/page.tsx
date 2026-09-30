@@ -127,7 +127,12 @@ export default function SolbitApp() {
           )}
           {nav === "firehose" && <FirehoseView />}
           {nav === "smart" && <SmartMoneyView />}
-          {nav === "watch" && <WatchView count={watch.length} />}
+          {nav === "watch" && (
+            <WatchView
+              mints={watch}
+              onOpen={(mint) => openDesk({ mint, symbol: mint.slice(0, 4) + "…" })}
+            />
+          )}
           {nav === "bots" && <BotsView />}
         </>
       )}
