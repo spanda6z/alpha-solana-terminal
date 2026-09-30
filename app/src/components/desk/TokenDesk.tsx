@@ -6,7 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSwap } from "@/hooks/useSwap";
 import { useTokenBalance, useSolBalance } from "@/hooks/useTokenBalance";
-import type { SelectedToken, Verdict } from "./types";
+import type { SelectedToken } from "./types";
 import clsx from "clsx";
 
 const riskCls: Record<string, string> = {
@@ -64,8 +64,16 @@ export function TokenDesk({
   const sol = useSolBalance();
   const tok = useTokenBalance(token.mint);
 
-  const chart = token.pairAddress
-    ? `https://dexscreener.com/solana/${token.pairAddress}?embed=1&theme=dark&trades=0&info=0`
+  const ivMap: Record<string, string> = {
+    "1m": "1",
+    "5m": "5",
+    "15m": "15",
+    "1h": "60",
+    "4h": "240",
+    "24h": "1D",
+  };
+  const chart = token.mint
+    ? `https://birdeye.so/tv-widget/${token.mint}?chain=solana&viewMode=pair&chartInterval=${ivMap[interval] || "15"}&chartType=CANDLE&theme=dark`
     : null;
 
   useEffect(() => {
@@ -183,17 +191,7 @@ export function TokenDesk({
           >
             <Star size={16} fill={watched ? "currentColor" : "none"} />
           </button>
-          {token.pairAddress && (
-            <a
-              href={`https://dexscreener.com/solana/${token.pairAddress}`}
-              target="_blank"
-              rel="noreferrer"
-              className="p-1.5 text-[#4A5560]"
-            >
-              <Share2 size={14} />
-            </a>
-          )}
-          <button onClick={onClose} className="p-1.5 text-[#7D8794] md:hidden">
+          <button onClick={onClose} className="p-1.5 text-[#7D8794]">
             <X size={16} />
           </button>
         </div>
@@ -230,7 +228,7 @@ export function TokenDesk({
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="border-b border-[#151B22]">
-          <div className="flex gap-1 px-2 py-1.5 overflow-x-auto">
+          <div className="flex gap-1 px-2 py-1 overflow-x-auto">
             {INTERVALS.map((iv) => (
               <button
                 key={iv}
@@ -243,16 +241,12 @@ export function TokenDesk({
                 {iv}
               </button>
             ))}
-            <span className="mono text-[9px] text-[#4A5560] ml-auto self-center pr-1">{interval} · chart</span>
           </div>
-          <div className="h-[220px] sm:h-[280px] bg-[#0A0E13]">
+          <div className="h-[168px] sm:h-[220px] bg-[#0A0E13]">
             {chart ? (
               <iframe title="chart" src={chart} className="w-full h-full border-0" />
             ) : (
-              <div className="h-full flex flex-col items-center justify-center data-unavailable">
-                Historical data unavailable
-                <span className="block mt-1 text-[#4A5560]">No pair for chart embed</span>
-              </div>
+              <div className="h-full flex items-center justify-center data-unavailable">Chart unavailable</div>
             )}
           </div>
         </div>
@@ -286,9 +280,7 @@ export function TokenDesk({
             {!loadingTrades && !trades.length && (
               <div className="data-unavailable py-10">
                 WAITING FOR DATA
-                <div className="mt-1 text-[#4A5560]">
-                  Set HELIUS_API_KEY on Vercel for live trades. No fabricated activity.
-                </div>
+                <div className="mt-1 text-[#4A5560]">HELIUS_API_KEY for live trades.</div>
               </div>
             )}
             {trades.map((tr, i) => {
@@ -328,10 +320,7 @@ export function TokenDesk({
 
         {tab === "holders" && (
           <div className="p-3 space-y-3 pb-4">
-            {dataHint && <div className="mono text-[10px] text-[#f59e0b]">{dataHint}</div>}
-            {loadingHolders && (
-              <div className="py-6 text-center mono text-[11px] text-[#7D8794]">Loading…</div>
-            )}
+            {loadingHolders && <div className="py-6 text-center mono text-[11px] text-[#7D8794]">Loading…</div>}
             <div className="sb-panel p-3">
               <div className="flex justify-between mono text-[10px] mb-2">
                 <span className="text-[#7D8794]">
@@ -342,32 +331,18 @@ export function TokenDesk({
                 </span>
               </div>
               <div className="h-1.5 rounded-full bg-[#151B22] overflow-hidden">
-                <div
-                  className="bg-[#3d9eff] h-full"
-                  style={{ width: `${Math.min(100, conc?.top10 || 0)}%` }}
-                />
+                <div className="bg-[#3d9eff] h-full" style={{ width: `${Math.min(100, conc?.top10 || 0)}%` }} />
               </div>
             </div>
             {!loadingHolders && !holders.length && (
-              <div className="data-unavailable">
-                WAITING FOR DATA
-                <div className="mt-1 text-[#4A5560]">HELIUS_API_KEY required for holders.</div>
-              </div>
+              <div className="data-unavailable">WAITING FOR DATA · HELIUS_API_KEY</div>
             )}
             {holders.map((h, i) => (
-              <div
-                key={h.address}
-                className="flex items-center gap-2 py-2 border-b border-[#151B22] mono text-[11px]"
-              >
+              <div key={h.address} className="flex items-center gap-2 py-2 border-b border-[#151B22] mono text-[11px]">
                 <span className="text-[#4A5560] w-5">{i + 1}</span>
                 <span className="flex-1 text-[#7D8794] truncate">
                   {h.address.slice(0, 6)}…{h.address.slice(-4)}
                 </span>
-                {h.tag && (
-                  <span className="text-[9px] px-1.5 py-0.5 border border-[#151B22] text-[#3d9eff]">
-                    {h.tag}
-                  </span>
-                )}
                 <span className="font-semibold w-14 text-right">{h.pct.toFixed(2)}%</span>
               </div>
             ))}
@@ -379,17 +354,12 @@ export function TokenDesk({
             <div className="sb-panel p-3">
               <div className="mono text-[10px] text-[#7D8794] tracking-wide mb-1">OBSERVABLE RISK</div>
               <div className={clsx("mono text-[14px] font-semibold", riskCls[riskLabel])}>{riskLabel}</div>
-              <p className="mono text-[10px] text-[#4A5560] mt-2 leading-relaxed">
-                Heuristic from liquidity and volatility. Not a scam label. Full checks need indexers.
-              </p>
+              <p className="mono text-[10px] text-[#4A5560] mt-2">Heuristic only. Not a buy signal.</p>
             </div>
             <div className="sb-panel p-3 space-y-2 mono text-[11px]">
+              <div className="flex justify-between"><span className="text-[#7D8794]">Liquidity</span><span>{token.liq || "—"}</span></div>
               <div className="flex justify-between">
-                <span className="text-[#7D8794]">Liquidity</span>
-                <span>{token.liq || "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D8794]">24h change</span>
+                <span className="text-[#7D8794]">24h</span>
                 <span>
                   {token.change24h != null
                     ? `${token.change24h >= 0 ? "+" : ""}${token.change24h.toFixed(1)}%`
@@ -397,15 +367,10 @@ export function TokenDesk({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#7D8794]">Top 10 holders</span>
-                <span>{conc ? `${conc.top10.toFixed(1)}%` : "DATA UNAVAILABLE"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D8794]">Confidence</span>
-                <span className="text-[#f59e0b]">LOW–MEDIUM</span>
+                <span className="text-[#7D8794]">Top 10</span>
+                <span>{conc ? `${conc.top10.toFixed(1)}%` : "—"}</span>
               </div>
             </div>
-            <p className="mono text-[9px] text-[#4A5560] px-1">Not a buy signal. Missing data lowers confidence.</p>
           </div>
         )}
 
@@ -420,16 +385,9 @@ export function TokenDesk({
                 <span className="text-[#7D8794]">Name</span>
                 <span>{token.name || "—"}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[#7D8794]">Age</span>
-                <span>{token.age || "—"}</span>
-              </div>
             </div>
-            <button
-              onClick={onOpenBots}
-              className="w-full mono text-[10px] py-2.5 border border-[#151B22] text-[#7D8794]"
-            >
-              OPEN MONITORING BOTS
+            <button onClick={onOpenBots} className="w-full mono text-[10px] py-2.5 border border-[#151B22] text-[#7D8794]">
+              OPEN BOTS
             </button>
           </div>
         )}
@@ -503,16 +461,12 @@ export function TokenDesk({
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="sb-input flex-1"
-                placeholder={side === "buy" ? "SOL amount" : "Token amount"}
+                placeholder={side === "buy" ? "SOL" : "Amount"}
               />
-              <select
-                value={slip}
-                onChange={(e) => setSlip(Number(e.target.value))}
-                className="sb-input w-24"
-              >
+              <select value={slip} onChange={(e) => setSlip(Number(e.target.value))} className="sb-input w-24">
                 {[50, 100, 200, 500].map((s) => (
                   <option key={s} value={s}>
-                    {s / 100}% slip
+                    {s / 100}%
                   </option>
                 ))}
               </select>
@@ -522,16 +476,6 @@ export function TokenDesk({
               {!connected && <span className="text-[#f59e0b]">Connect wallet</span>}
             </div>
             {error && <div className="mono text-[10px] text-[#ef4444]">{error}</div>}
-            {lastTx && (
-              <a
-                href={`https://solscan.io/tx/${lastTx}`}
-                target="_blank"
-                rel="noreferrer"
-                className="block mono text-[10px] text-[#3d9eff] truncate"
-              >
-                TX {lastTx}
-              </a>
-            )}
             <button
               onClick={trade}
               disabled={!connected || loading}
