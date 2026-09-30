@@ -113,91 +113,66 @@ function pairToRow(p: DexPair): TokenRow | null {
   };
 }
 
-export async function fetchWatchlistTokens(): Promise<TokenRow[]> {
-  const ids = WATCHLIST.join(",");
-  const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ids}`);
-  if (!res.ok) return fallbackRows();
-  const data = await res.json();
-  const pairs: DexPair[] = data.pairs || [];
-  const best = new Map<string, DexPair>();
-  for (const p of pairs) {
-    if (p.chainId !== "solana") continue;
-    const mint = p.baseToken.address;
-    const prev = best.get(mint);
-    if (!prev || (p.liquidity?.usd ?? 0) > (prev.liquidity?.usd ?? 0)) best.set(mint, p);
-  }
-  const rows: TokenRow[] = [];
-  for (const mint of WATCHLIST) {
-    const p = best.get(mint);
-    if (p) {
-      const row = pairToRow(p);
-      if (row) rows.push(row);
-    }
-  }
-  return rows.length ? rows : fallbackRows();
-}
-
-export async function fetchFirehoseTokens(limit = 30): Promise<TokenRow[]> {
+async function fetchBirdeyeRows(sort: "volume" | "momentum" | "liquidity" | "market_cap" = "volume", limit = 50): Promise<TokenRow[]> {
   try {
-    // DexScreener search gives us a broad, public market stream without inventing events.
-    // We use several high-signal Solana queries and deduplicate by mint.
-    const queries = ["solana", "pump", "ai", "meme"];
-    const responses = await Promise.all(
-      queries.map((q) => fetch(`https://api.dexscreener.com/latest/dex/search/?q=${encodeURIComponent(q)}`))
-    );
-    const best = new Map<string, DexPair>();
-    for (const res of responses) {
-      if (!res.ok) continue;
-      const data = await res.json();
-      for (const p of (data.pairs || []) as DexPair[]) {
-        if (p.chainId !== "solana") continue;
-        const mint = p.baseToken.address;
-        const prev = best.get(mint);
-        if (!prev || (p.pairCreatedAt ?? 0) > (prev.pairCreatedAt ?? 0)) best.set(mint, p);
-      }
-    }
-    return [...best.values()]
-      .sort((a, b) => (b.pairCreatedAt ?? 0) - (a.pairCreatedAt ?? 0))
-      .slice(0, limit)
-      .map(pairToRow)
-      .filter((x): x is TokenRow => Boolean(x));
+    const res = await fetch(`/api/market?sort=${sort}&limit=${Math.min(limit, 100)}&minLiquidity=100`, { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok || !data.live || !Array.isArray(data.tokens)) return [];
+    return data.tokens.map((token: any) => ({
+      mint: token.address,
+      symbol: token.symbol,
+      name: token.name,
+      verdict: guessVerdict(token.address, Number(token.liquidity || 0), Number(token.priceChange24hPercent || 0)),
+      price: fmtPrice(Number(token.price || 0)),
+      priceRaw: Number(token.price || 0),
+      change24h: Number(token.priceChange24hPercent || 0),
+      mcap: fmtUsd(Number(token.marketCap || token.fdv || 0)),
+      liq: fmtUsd(Number(token.liquidity || 0)),
+      vol: fmtUsd(Number(token.volume24h || 0)),
+      age: "LIVE",
+      imageUrl: token.logoURI,
+    })) as TokenRow[];
   } catch {
     return [];
   }
 }
 
+export async function fetchWatchlistTokens(): Promise<TokenRow[]> {
+  const rows = await Promise.all(WATCHLIST.map(async (mint) => {
+    try {
+      const res = await fetch(`/api/market?address=${encodeURIComponent(mint)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || !data.live || !data.token) return null;
+      const token = data.token;
+      return {
+        mint: token.address,
+        symbol: token.symbol,
+        name: token.name,
+        verdict: guessVerdict(token.address, Number(token.liquidity || 0), Number(token.priceChange24hPercent || 0)),
+        price: fmtPrice(Number(token.price || 0)),
+        priceRaw: Number(token.price || 0),
+        change24h: Number(token.priceChange24hPercent || 0),
+        mcap: fmtUsd(Number(token.marketCap || token.fdv || 0)),
+        liq: fmtUsd(Number(token.liquidity || 0)),
+        vol: fmtUsd(Number(token.volume24h || 0)),
+        age: "LIVE",
+        imageUrl: token.logoURI,
+      } as TokenRow;
+    } catch {
+      return null;
+    }
+  }));
+  const valid = rows.filter((row): row is TokenRow => Boolean(row));
+  return valid.length ? valid : fallbackRows();
+}
+
 export async function fetchTrendingTokens(limit = 20): Promise<TokenRow[]> {
-  try {
-    const res = await fetch("https://api.dexscreener.com/token-boosts/top/v1");
-    if (!res.ok) throw new Error("boosts failed");
-    const boosts = await res.json();
-    const sol = (boosts as any[])
-      .filter((b) => b.chainId === "solana")
-      .slice(0, limit)
-      .map((b) => b.tokenAddress as string);
-    if (!sol.length) throw new Error("empty");
-    const res2 = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${sol.join(",")}`);
-    const data = await res2.json();
-    const pairs: DexPair[] = data.pairs || [];
-    const best = new Map<string, DexPair>();
-    for (const p of pairs) {
-      if (p.chainId !== "solana") continue;
-      const mint = p.baseToken.address;
-      const prev = best.get(mint);
-      if (!prev || (p.liquidity?.usd ?? 0) > (prev.liquidity?.usd ?? 0)) best.set(mint, p);
-    }
-    const rows: TokenRow[] = [];
-    for (const mint of sol) {
-      const p = best.get(mint);
-      if (p) {
-        const row = pairToRow(p);
-        if (row) rows.push(row);
-      }
-    }
-    return rows.length ? rows : fallbackRows();
-  } catch {
-    return fetchWatchlistTokens();
-  }
+  const rows = await fetchBirdeyeRows("volume", limit);
+  return rows.length ? rows : fallbackRows();
+}
+
+export async function fetchFirehoseTokens(limit = 30): Promise<TokenRow[]> {
+  return fetchBirdeyeRows("momentum", limit);
 }
 
 function fallbackRows(): TokenRow[] {
