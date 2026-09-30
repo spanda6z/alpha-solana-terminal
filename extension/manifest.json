@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "SOLBIT",
+  "version": "0.1.0",
+  "description": "Solana market intelligence on social — token cards next to contract addresses, one-click CA copy.",
+  "permissions": ["storage", "clipboardWrite"],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://www.dexscreener.com/*",
+    "https://dexscreener.com/*",
+    "https://alpha-solana-terminal.vercel.app/*",
+    "https://api.dexscreener.com/*"
+  ],
+  "action": {
+    "default_title": "SOLBIT",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://www.dexscreener.com/*",
+        "https://dexscreener.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

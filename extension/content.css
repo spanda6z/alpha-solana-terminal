@@ -1,0 +1,103 @@
+.solbit-ca {
+  background: rgba(61, 158, 255, 0.12);
+  border-bottom: 1px dashed #3d9eff;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+.solbit-ca:hover {
+  background: rgba(61, 158, 255, 0.22);
+}
+.solbit-card {
+  position: absolute;
+  z-index: 2147483646;
+  width: 280px;
+  background: #0A0E13;
+  border: 1px solid #151B22;
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  color: #F5F7FA;
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  font-size: 11px;
+  padding: 0;
+  overflow: hidden;
+}
+.solbit-card header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #151B22;
+}
+.solbit-card header img {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #151B22;
+}
+.solbit-card .sym { font-weight: 600; font-size: 13px; }
+.solbit-card .name {
+  color: #7D8794;
+  font-size: 10px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.solbit-card .metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  padding: 10px 12px;
+}
+.solbit-card .metrics span {
+  color: #4A5560;
+  font-size: 9px;
+  display: block;
+}
+.solbit-card .metrics b {
+  color: #F5F7FA;
+  font-weight: 500;
+  font-size: 11px;
+}
+.solbit-card .actions {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 12px;
+}
+.solbit-card .actions a,
+.solbit-card .actions button {
+  flex: 1;
+  text-align: center;
+  padding: 8px 6px;
+  border: 1px solid #151B22;
+  background: transparent;
+  color: #3d9eff;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.solbit-card .actions a.primary {
+  background: #3d9eff;
+  color: #05070A;
+  border-color: #3d9eff;
+}
+.solbit-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0A0E13;
+  border: 1px solid #3d9eff;
+  color: #F5F7FA;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  z-index: 2147483647;
+  pointer-events: none;
+}
