@@ -63,10 +63,11 @@ export default function DeskApp() {
     setWatch((w) => (w.includes(mint) ? w.filter((x) => x !== mint) : [...w, mint]));
   }, []);
 
-  const quickBuy = async (t: SelectedToken) => {
+  /** One-tap Jupiter market buy for a fixed SOL size */
+  const quickBuy = async (t: SelectedToken, solAmount = 0.1) => {
     if (!connected) return;
     try {
-      await buyWithSol(new PublicKey(t.mint), 0.1, 100);
+      await buyWithSol(new PublicKey(t.mint), solAmount, 100);
     } catch {
       /* */
     }
