@@ -3,8 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import { Star } from "lucide-react";
-import { fetchMarketTokens, searchTokens, type TokenRow } from "@/lib/tokens";
-import type { SelectedToken, Filter, Verdict } from "./types";
+import {
+  fetchMarketTokens,
+  searchTokens,
+  type MarketMode,
+  type TokenRow,
+} from "@/lib/tokens";
+import type { SelectedToken, MarketCategory, Verdict } from "./types";
 
 function toVerdict(risk: string): Verdict {
   if (risk === "LOW") return "SAFE";
@@ -20,6 +25,20 @@ const verdictCls: Record<Verdict, string> = {
   "BLUE CHIP": "text-[#60a5fa]",
   UNKNOWN: "text-[#5e5e70]",
 };
+
+/** Quick buy size in SOL — Jupiter market buy, not a USD label */
+const QUICK_SOL = 0.1;
+
+const CATEGORIES: { id: MarketCategory; label: string; mode?: MarketMode }[] = [
+  { id: "trending", label: "TRENDING", mode: "trending" },
+  { id: "new", label: "NEW PAIRS", mode: "new" },
+  { id: "gainers", label: "GAINERS", mode: "gainers" },
+  { id: "losers", label: "LOSERS", mode: "losers" },
+  { id: "volume", label: "HIGH VOLUME", mode: "volume" },
+  { id: "liquidity", label: "HIGH LIQ", mode: "liquidity" },
+  { id: "unusual", label: "UNUSUAL" },
+  { id: "watched", label: "WATCHED" },
+];
 
 function rowToSelected(t: TokenRow & { verdict?: Verdict }): SelectedToken {
   return {
@@ -39,7 +58,7 @@ function rowToSelected(t: TokenRow & { verdict?: Verdict }): SelectedToken {
 }
 
 export function Board({
-  mode,
+  mode: boardMode,
   onOpenToken,
   onQuickBuy,
   watchlist,
@@ -48,25 +67,42 @@ export function Board({
 }: {
   mode: "market" | "firehose";
   onOpenToken: (t: SelectedToken) => void;
-  onQuickBuy?: (t: SelectedToken) => void;
+  onQuickBuy?: (t: SelectedToken, solAmount: number) => void;
   watchlist: string[];
   onToggleWatch: (mint: string) => void;
   onOpenLeaders?: () => void;
 }) {
-  const [filter, setFilter] = useState<Filter>(mode === "firehose" ? "LIQ1K" : "ALL");
+  const [category, setCategory] = useState<MarketCategory>(
+    boardMode === "firehose" ? "new" : "trending"
+  );
   const [rows, setRows] = useState<TokenRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState<"VOL" | "MC" | "24H" | "AGE">("VOL");
+
+  useEffect(() => {
+    setCategory(boardMode === "firehose" ? "new" : "trending");
+  }, [boardMode]);
 
   const load = async () => {
     setLoading(true);
     try {
-      const data =
-        q.trim().length > 1
-          ? await searchTokens(q)
-          : await fetchMarketTokens(80, mode === "firehose" ? "new" : "trending");
-      setRows(data);
+      if (category === "watched") {
+        const all = await fetchMarketTokens(80, "trending");
+        setRows(all.filter((t) => watchlist.includes(t.mint)));
+        return;
+      }
+      if (category === "unusual") {
+        const all = await fetchMarketTokens(100, "volume");
+        setRows(
+          [...all]
+            .filter((t) => t.liqRaw >= 2000)
+            .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
+            .slice(0, 80)
+        );
+        return;
+      }
+      const cat = CATEGORIES.find((c) => c.id === category);
+      const m: MarketMode = cat?.mode || "trending";
+      setRows(await fetchMarketTokens(80, m));
     } catch {
       setRows([]);
     } finally {
@@ -78,62 +114,25 @@ export function Board({
     load();
     const id = setInterval(load, 45_000);
     return () => clearInterval(id);
-  }, [mode]);
-
-  useEffect(() => {
-    const t = setTimeout(load, 350);
-    return () => clearTimeout(t);
-  }, [q]);
-
-  useEffect(() => {
-    setFilter(mode === "firehose" ? "LIQ1K" : "ALL");
-    setSort(mode === "firehose" ? "AGE" : "VOL");
-  }, [mode]);
+  }, [category, boardMode]);
 
   const list = useMemo(() => {
-    let r = rows.map((t) => {
+    return rows.map((t) => {
       let verdict = toVerdict(t.risk);
       if (t.liqRaw >= 500000 && (verdict === "SAFE" || verdict === "UNKNOWN"))
         verdict = "BLUE CHIP";
       return { ...t, verdict };
     });
-    if (filter === "SAFE") r = r.filter((t) => t.verdict === "SAFE" || t.verdict === "BLUE CHIP");
-    if (filter === "FLAGGED") r = r.filter((t) => t.verdict === "DANGER" || t.verdict === "CAUTION");
-    if (filter === "ALIVE" || filter === "LIQ1K") r = r.filter((t) => t.liqRaw >= 1000);
-    if (filter === "BLUE CHIP")
-      r = r.filter((t) => t.verdict === "BLUE CHIP" || t.liqRaw >= 500000);
-    if (filter === "WATCH") r = r.filter((t) => watchlist.includes(t.mint));
-    if (sort === "VOL") r.sort((a, b) => b.volRaw - a.volRaw);
-    if (sort === "MC") r.sort((a, b) => b.mcapRaw - a.mcapRaw);
-    if (sort === "24H") r.sort((a, b) => b.change24h - a.change24h);
-    return r;
-  }, [rows, filter, sort, watchlist]);
-
-  const pills: { id: Filter; label: string }[] =
-    mode === "firehose"
-      ? [
-          { id: "WATCH", label: "★ WATCHLIST" },
-          { id: "LIQ1K", label: "LIQ > $1K" },
-          { id: "ALL", label: "ALL" },
-          { id: "ALIVE", label: "ALIVE" },
-          { id: "FLAGGED", label: "FLAGGED" },
-        ]
-      : [
-          { id: "SAFE", label: "SAFE" },
-          { id: "FLAGGED", label: "FLAGGED" },
-          { id: "ALIVE", label: "ALIVE" },
-          { id: "BLUE CHIP", label: "BLUE CHIP" },
-          { id: "WATCH", label: "MY BAG" },
-        ];
+  }, [rows]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-3 py-2 flex items-center gap-2 text-[11px] text-[#9898a8] overflow-x-auto border-b border-[#1c1c26]">
+      <div className="px-3 py-2 flex items-center gap-2 text-[11px] text-[#9898a8] border-b border-[#1c1c26]">
         <span className="font-semibold text-[#f3f3f7] shrink-0">
           {loading ? "…" : list.length}
           <span className="font-normal text-[#5e5e70]"> tokens</span>
         </span>
-        <button type="button" onClick={() => onOpenLeaders?.()} className="pill text-[10px] !py-1">
+        <button type="button" onClick={() => onOpenLeaders?.()} className="pill !py-1">
           🏆 LEADERS
         </button>
         <span className="flex items-center gap-1.5 shrink-0 text-[10px]">
@@ -146,29 +145,22 @@ export function Board({
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto px-2.5 py-2 border-b border-[#1c1c26]">
-        {pills.map((p) => (
+        {CATEGORIES.map((c) => (
           <button
-            key={p.id}
-            onClick={() => setFilter(p.id)}
-            className={clsx("pill", filter === p.id && "active")}
+            key={c.id}
+            onClick={() => setCategory(c.id)}
+            className={clsx("pill", category === c.id && "active")}
           >
-            {p.label}
+            {c.label}
           </button>
         ))}
       </div>
 
-      <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] text-[#5e5e70] border-b border-[#1c1c26]">
-        <span>⇅ SORT</span>
-        {(["VOL", "MC", "24H", "AGE"] as const).map((s) => (
-          <button
-            key={s}
-            onClick={() => setSort(s)}
-            className={clsx(sort === s ? "text-[#fbbf24] font-semibold" : "")}
-          >
-            {s}
-            {sort === s ? " ↓" : ""}
-          </button>
-        ))}
+      <div className="flex items-center gap-2 px-3 py-1.5 text-[9px] text-[#5e5e70] tracking-wider border-b border-[#1c1c26]">
+        <span className="flex-1">TOKEN</span>
+        <span className="w-16 text-right">MC</span>
+        <span className="w-14 text-right">24H</span>
+        <span className="w-[52px] text-right">BUY</span>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">
@@ -181,18 +173,21 @@ export function Board({
                   <div className="skeleton h-3 w-24" />
                   <div className="skeleton h-2.5 w-32" />
                 </div>
-                <div className="space-y-1.5 flex flex-col items-end">
-                  <div className="skeleton h-3 w-12" />
-                  <div className="skeleton h-2.5 w-10" />
-                </div>
+                <div className="skeleton h-3 w-12" />
               </div>
             ))}
           </div>
         )}
         {!loading && !list.length && (
           <div className="p-12 text-center">
-            <div className="text-[13px] font-medium text-[#9898a8] mb-1">No tokens match</div>
-            <div className="text-[11px] text-[#5e5e70]">Try another filter or refresh</div>
+            <div className="text-[13px] font-medium text-[#9898a8] mb-1">
+              {category === "watched" ? "Watchlist empty" : "No tokens in this view"}
+            </div>
+            <div className="text-[11px] text-[#5e5e70]">
+              {category === "watched"
+                ? "Star tokens from any category"
+                : "Switch category or refresh"}
+            </div>
           </div>
         )}
         {list.map((t) => {
@@ -227,37 +222,39 @@ export function Board({
                     </span>
                   </div>
                   <div className="text-[11px] text-[#9898a8] mt-0.5 truncate">
-                    V {t.vol} · {t.price}
+                    V {t.vol} · L {t.liq}
                   </div>
                 </div>
-                <div className="text-right shrink-0">
+                <div className="text-right shrink-0 w-16">
                   <div className="font-semibold text-[13px] tabular-nums">{t.mcap}</div>
-                  <div
-                    className={clsx(
-                      "text-[11px] font-medium mt-0.5 tabular-nums",
-                      t.change24h >= 0.05
-                        ? "text-[#34d399]"
-                        : t.change24h <= -0.05
-                        ? "text-[#f87171]"
-                        : "text-[#9898a8]"
-                    )}
-                  >
-                    {t.change24h >= 0 ? "+" : ""}
-                    {t.change24h.toFixed(1)}%
-                  </div>
+                </div>
+                <div
+                  className={clsx(
+                    "text-right shrink-0 w-14 text-[11px] font-medium tabular-nums",
+                    t.change24h >= 0.05
+                      ? "text-[#34d399]"
+                      : t.change24h <= -0.05
+                      ? "text-[#f87171]"
+                      : "text-[#9898a8]"
+                  )}
+                >
+                  {t.change24h >= 0 ? "+" : ""}
+                  {t.change24h.toFixed(1)}%
                 </div>
               </button>
               <button
                 onClick={() => onToggleWatch(t.mint)}
-                className={clsx("p-1.5", watched ? "text-[#fbbf24]" : "text-[#5e5e70]")}
+                className={clsx("p-1", watched ? "text-[#fbbf24]" : "text-[#5e5e70]")}
+                title="Watch"
               >
-                <Star size={15} fill={watched ? "currentColor" : "none"} />
+                <Star size={14} fill={watched ? "currentColor" : "none"} />
               </button>
               <button
-                onClick={() => onQuickBuy?.(rowToSelected(t))}
-                className="shrink-0 px-2.5 py-1.5 rounded-full border border-[#f59e0b]/70 text-[#fbbf24] text-[10px] font-semibold tracking-wide active:bg-[#f59e0b]/15"
+                onClick={() => onQuickBuy?.(rowToSelected(t), QUICK_SOL)}
+                title={`Buy ${QUICK_SOL} SOL of ${t.symbol || "token"} via Jupiter`}
+                className="shrink-0 min-w-[48px] px-2 py-1.5 rounded-full border border-[#f59e0b]/70 text-[#fbbf24] text-[10px] font-semibold tracking-wide active:bg-[#f59e0b]/15"
               >
-                $25
+                {QUICK_SOL}◎
               </button>
             </div>
           );
