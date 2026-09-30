@@ -1,5 +1,5 @@
 /**
- * Live Solana token data via DexScreener
+ * Market data — prefers Birdeye via /api/market, falls back to DexScreener
  */
 
 export type RiskLevel = "LOW" | "MED" | "HIGH" | "UNKNOWN";
@@ -24,6 +24,7 @@ export interface TokenRow {
   pairAddress?: string;
   buys?: number;
   sells?: number;
+  source?: string;
 }
 
 function fmtUsd(n: number | undefined | null): string {
@@ -53,8 +54,7 @@ function ageFromMs(createdAt?: number): string {
   if (hours < 24) return `${hours}h`;
   const days = Math.floor(hours / 24);
   if (days < 30) return `${days}d`;
-  if (days < 365) return `${Math.floor(days / 30)}mo`;
-  return `${Math.floor(days / 365)}y`;
+  return `${Math.floor(days / 30)}mo`;
 }
 
 function riskFrom(liqUsd: number, change24h: number): RiskLevel {
@@ -76,7 +76,6 @@ interface DexPair {
   marketCap?: number;
   fdv?: number;
   pairCreatedAt?: number;
-  txns?: { h24?: { buys?: number; sells?: number } };
   info?: { imageUrl?: string };
 }
 
@@ -107,8 +106,7 @@ function pairToRow(p: DexPair): TokenRow | null {
     imageUrl: p.info?.imageUrl,
     pairUrl: p.url,
     pairAddress: p.pairAddress,
-    buys: p.txns?.h24?.buys,
-    sells: p.txns?.h24?.sells,
+    source: "dexscreener",
   };
 }
 
@@ -118,9 +116,7 @@ function dedupeBest(pairs: DexPair[]): TokenRow[] {
     if (p.chainId !== "solana" || !p.baseToken?.address) continue;
     const mint = p.baseToken.address;
     const prev = best.get(mint);
-    if (!prev || (p.liquidity?.usd ?? 0) > (prev.liquidity?.usd ?? 0)) {
-      best.set(mint, p);
-    }
+    if (!prev || (p.liquidity?.usd ?? 0) > (prev.liquidity?.usd ?? 0)) best.set(mint, p);
   }
   const rows: TokenRow[] = [];
   for (const p of best.values()) {
@@ -130,8 +126,22 @@ function dedupeBest(pairs: DexPair[]): TokenRow[] {
   return rows;
 }
 
-export async function searchTokens(q: string): Promise<TokenRow[]> {
-  if (!q.trim()) return [];
+async function fromBirdeyeApi(q?: string, mode?: string): Promise<TokenRow[]> {
+  try {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (mode) params.set("mode", mode);
+    const res = await fetch(`/api/market?${params}`, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data.ok || !Array.isArray(data.tokens) || !data.tokens.length) return [];
+    return data.tokens as TokenRow[];
+  } catch {
+    return [];
+  }
+}
+
+async function dexSearch(q: string): Promise<TokenRow[]> {
   try {
     const res = await fetch(
       `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`
@@ -144,9 +154,8 @@ export async function searchTokens(q: string): Promise<TokenRow[]> {
   }
 }
 
-export async function fetchMarketTokens(limit = 80): Promise<TokenRow[]> {
+async function dexMarket(): Promise<TokenRow[]> {
   const all: DexPair[] = [];
-
   try {
     const boosts = await fetch("https://api.dexscreener.com/token-boosts/top/v1");
     if (boosts.ok) {
@@ -165,52 +174,69 @@ export async function fetchMarketTokens(limit = 80): Promise<TokenRow[]> {
       }
     }
   } catch {
-    /* continue */
+    /* */
   }
-
-  const queries = ["SOL", "USDC", "raydium", "pump"];
-  for (const q of queries) {
+  for (const q of ["SOL", "USDC", "raydium", "pump"]) {
     try {
       const r = await fetch(
         `https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(q)}`
       );
       if (r.ok) {
         const d = await r.json();
-        const pairs = (d.pairs || []).filter((p: DexPair) => p.chainId === "solana");
-        all.push(...pairs.slice(0, 40));
+        all.push(
+          ...((d.pairs || []) as DexPair[]).filter((p) => p.chainId === "solana").slice(0, 40)
+        );
       }
     } catch {
-      /* skip */
+      /* */
     }
   }
-
   let rows = dedupeBest(all);
   rows.sort((a, b) => b.volRaw - a.volRaw);
-  if (rows.length < 10) {
-    rows = await fetchWatchlistTokens();
+  return rows.slice(0, 80);
+}
+
+async function attachPairs(rows: TokenRow[]): Promise<TokenRow[]> {
+  const need = rows.filter((r) => !r.pairAddress).slice(0, 25);
+  if (!need.length) return rows;
+  try {
+    const ids = need.map((r) => r.mint).join(",");
+    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${ids}`);
+    if (!res.ok) return rows;
+    const data = await res.json();
+    const best = new Map<string, string>();
+    for (const p of data.pairs || []) {
+      if (p.chainId !== "solana") continue;
+      const mint = p.baseToken?.address;
+      if (!mint || best.has(mint)) continue;
+      best.set(mint, p.pairAddress);
+    }
+    return rows.map((r) => ({
+      ...r,
+      pairAddress: r.pairAddress || best.get(r.mint),
+    }));
+  } catch {
+    return rows;
   }
-  return rows.slice(0, limit);
+}
+
+export async function searchTokens(q: string): Promise<TokenRow[]> {
+  if (!q.trim()) return [];
+  const be = await fromBirdeyeApi(q);
+  if (be.length) return attachPairs(be);
+  return dexSearch(q);
+}
+
+export async function fetchMarketTokens(limit = 80): Promise<TokenRow[]> {
+  const be = await fromBirdeyeApi(undefined, "trending");
+  if (be.length) {
+    const withPairs = await attachPairs(be);
+    return withPairs.slice(0, limit);
+  }
+  const dex = await dexMarket();
+  return dex.slice(0, limit);
 }
 
 export async function fetchWatchlistTokens(): Promise<TokenRow[]> {
-  const mints = [
-    "So11111111111111111111111111111111111111112",
-    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-    "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
-    "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr",
-    "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
-    "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN",
-    "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3",
-  ];
-
-  try {
-    const res = await fetch(
-      `https://api.dexscreener.com/latest/dex/tokens/${mints.join(",")}`
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return dedupeBest(data.pairs || []);
-  } catch {
-    return [];
-  }
+  return fetchMarketTokens(20);
 }
