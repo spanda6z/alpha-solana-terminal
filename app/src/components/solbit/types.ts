@@ -1,24 +1,36 @@
 export type NavId =
   | "landing"
-  | "market"
-  | "desk"
-  | "flow"
+  | "discover"
+  | "markets"
+  | "firehose"
   | "smart"
-  | "rap"
-  | "watch";
+  | "watch"
+  | "bots";
 
 export type DeskTab =
   | "overview"
+  | "chart"
   | "flow"
-  | "holders"
   | "trades"
+  | "holders"
+  | "liquidity"
+  | "wallets"
   | "risk"
-  | "smart"
-  | "dex";
+  | "transactions";
 
 export type SelectedToken = {
   mint: string;
   pairAddress?: string;
   symbol?: string;
   name?: string;
+  price?: string;
+  change24h?: number;
+  mcap?: string;
+  liq?: string;
+  vol?: string;
+  age?: string;
+  imageUrl?: string;
+  risk?: string;
 };
+
+export type Confidence = "HIGH" | "MEDIUM" | "LOW";

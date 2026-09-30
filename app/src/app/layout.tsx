@@ -3,18 +3,10 @@ import "./globals.css";
 import { WalletContextProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
-  title: "ALPHA — Solana Market Terminal",
-  description: "Read the market before you trade it. Dense Solana terminal: market, firehose, bots.",
-  icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
-  },
-  openGraph: {
-    title: "ALPHA",
-    description: "Solana market terminal",
-    images: ["/og-banner.svg"],
-  },
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "ALPHA" },
+  title: "SOLBIT — Solana Market Intelligence",
+  description: "See the market. Read the flow. Understand the risk.",
+  icons: { icon: "/favicon.svg" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "SOLBIT" },
 };
 
 export const viewport: Viewport = {
@@ -22,7 +14,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0a0a0f",
+  themeColor: "#05070A",
   viewportFit: "cover",
 };
 
