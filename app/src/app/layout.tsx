@@ -3,16 +3,13 @@ import "./globals.css";
 import { WalletContextProvider } from "@/components/WalletProvider";
 
 export const metadata: Metadata = {
-  title: "Alpha — Solana Terminal",
-  description: "Non-custodial Solana trading terminal. Live board + Jupiter swaps.",
+  title: "SOLBIT — Digital Asset Market Terminal",
+  description:
+    "Read the market before you trade it. Market data, on-chain flow, wallet behavior, risk.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23050505'/><text x='16' y='23' text-anchor='middle' font-size='18' font-family='monospace' font-weight='700' fill='%23ff6b00'>α</text></svg>",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%23070809' width='32' height='32' rx='4'/><text x='16' y='22' text-anchor='middle' font-size='14' font-family='monospace' font-weight='700' fill='%233d9eff'>SB</text></svg>",
   },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Alpha",
-  },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "SOLBIT" },
 };
 
 export const viewport: Viewport = {
@@ -20,15 +17,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#050505",
+  themeColor: "#070809",
   viewportFit: "cover",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className="antialiased">
