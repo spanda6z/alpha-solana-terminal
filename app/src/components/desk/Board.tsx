@@ -18,7 +18,7 @@ const verdictCls: Record<Verdict, string> = {
   CAUTION: "text-[#fbbf24]",
   DANGER: "text-[#f87171]",
   "BLUE CHIP": "text-[#60a5fa]",
-  UNKNOWN: "text-[#5c5c72]",
+  UNKNOWN: "text-[#5e5e70]",
 };
 
 function rowToSelected(t: TokenRow & { verdict?: Verdict }): SelectedToken {
@@ -128,24 +128,24 @@ export function Board({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-3 py-2 flex items-center gap-2 text-[11px] text-[#9b9bb0] overflow-x-auto border-b border-[#1a1a28]">
-        <span className="font-semibold text-[#f4f4f8] shrink-0">
+      <div className="px-3 py-2 flex items-center gap-2 text-[11px] text-[#9898a8] overflow-x-auto border-b border-[#1c1c26]">
+        <span className="font-semibold text-[#f3f3f7] shrink-0">
           {loading ? "…" : list.length}
-          <span className="font-normal text-[#5c5c72]"> tokens</span>
+          <span className="font-normal text-[#5e5e70]"> tokens</span>
         </span>
         <button type="button" onClick={() => onOpenLeaders?.()} className="pill text-[10px] !py-1">
           🏆 LEADERS
         </button>
-        <span className="flex items-center gap-1 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
+        <span className="flex items-center gap-1.5 shrink-0 text-[10px]">
+          <span className="live-dot" />
           LIVE
         </span>
-        <button onClick={load} className="ml-auto text-[#5c5c72] shrink-0">
+        <button onClick={load} className="ml-auto text-[#5e5e70] shrink-0 active:text-[#fbbf24]">
           ↻
         </button>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto px-2.5 py-2 border-b border-[#1a1a28]">
+      <div className="flex gap-1.5 overflow-x-auto px-2.5 py-2 border-b border-[#1c1c26]">
         {pills.map((p) => (
           <button
             key={p.id}
@@ -157,13 +157,13 @@ export function Board({
         ))}
       </div>
 
-      <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] text-[#5c5c72] border-b border-[#1a1a28]">
+      <div className="flex items-center gap-3 px-3 py-1.5 text-[10px] text-[#5e5e70] border-b border-[#1c1c26]">
         <span>⇅ SORT</span>
         {(["VOL", "MC", "24H", "AGE"] as const).map((s) => (
           <button
             key={s}
             onClick={() => setSort(s)}
-            className={clsx(sort === s ? "text-[#a78bfa] font-semibold" : "")}
+            className={clsx(sort === s ? "text-[#fbbf24] font-semibold" : "")}
           >
             {s}
             {sort === s ? " ↓" : ""}
@@ -173,10 +173,27 @@ export function Board({
 
       <div className="flex-1 overflow-y-auto min-h-0">
         {loading && !rows.length && (
-          <div className="p-12 text-center text-[12px] text-[#5c5c72]">Loading market…</div>
+          <div className="p-3 space-y-2">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex items-center gap-2.5 py-2">
+                <div className="skeleton w-9 h-9 rounded-full" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="skeleton h-3 w-24" />
+                  <div className="skeleton h-2.5 w-32" />
+                </div>
+                <div className="space-y-1.5 flex flex-col items-end">
+                  <div className="skeleton h-3 w-12" />
+                  <div className="skeleton h-2.5 w-10" />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
         {!loading && !list.length && (
-          <div className="p-12 text-center text-[12px] text-[#5c5c72]">No tokens</div>
+          <div className="p-12 text-center">
+            <div className="text-[13px] font-medium text-[#9898a8] mb-1">No tokens match</div>
+            <div className="text-[11px] text-[#5e5e70]">Try another filter or refresh</div>
+          </div>
         )}
         {list.map((t) => {
           const v = t.verdict as Verdict;
@@ -184,7 +201,7 @@ export function Board({
           return (
             <div
               key={t.mint + (t.pairAddress || "")}
-              className="flex items-center gap-2 px-3 py-2.5 border-b border-[#14141e] active:bg-[#12121c]"
+              className="row-hover flex items-center gap-2 px-3 py-2.5 border-b border-[#1c1c26]"
             >
               <button
                 className="flex-1 flex items-center gap-2.5 min-w-0 text-left"
@@ -194,35 +211,35 @@ export function Board({
                   <img
                     src={t.imageUrl}
                     alt=""
-                    className="w-9 h-9 rounded-full object-cover bg-[#1a1a28] shrink-0"
+                    className="w-9 h-9 rounded-full object-cover bg-[#18181f] shrink-0"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-[#1a1a28] flex items-center justify-center text-[12px] font-bold text-[#a78bfa] shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-[#18181f] flex items-center justify-center text-[12px] font-bold text-[#fbbf24] shrink-0">
                     {(t.symbol || "?")[0]}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="font-semibold text-[14px]">{t.symbol}</span>
-                    <span className="text-[10px] text-[#5c5c72]">{t.age}</span>
+                    <span className="text-[10px] text-[#5e5e70]">{t.age}</span>
                     <span className={clsx("text-[10px] font-semibold", verdictCls[v])}>
                       {v === "BLUE CHIP" ? "BLUE CHIP" : v}
                     </span>
                   </div>
-                  <div className="text-[11px] text-[#9b9bb0] mt-0.5 truncate">
+                  <div className="text-[11px] text-[#9898a8] mt-0.5 truncate">
                     V {t.vol} · {t.price}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-semibold text-[13px]">{t.mcap}</div>
+                  <div className="font-semibold text-[13px] tabular-nums">{t.mcap}</div>
                   <div
                     className={clsx(
-                      "text-[11px] font-medium mt-0.5",
+                      "text-[11px] font-medium mt-0.5 tabular-nums",
                       t.change24h >= 0.05
                         ? "text-[#34d399]"
                         : t.change24h <= -0.05
                         ? "text-[#f87171]"
-                        : "text-[#9b9bb0]"
+                        : "text-[#9898a8]"
                     )}
                   >
                     {t.change24h >= 0 ? "+" : ""}
@@ -232,13 +249,13 @@ export function Board({
               </button>
               <button
                 onClick={() => onToggleWatch(t.mint)}
-                className={clsx("p-1.5", watched ? "text-[#a78bfa]" : "text-[#5c5c72]")}
+                className={clsx("p-1.5", watched ? "text-[#fbbf24]" : "text-[#5e5e70]")}
               >
                 <Star size={15} fill={watched ? "currentColor" : "none"} />
               </button>
               <button
                 onClick={() => onQuickBuy?.(rowToSelected(t))}
-                className="shrink-0 px-2.5 py-1.5 rounded-full border border-[#8b5cf6] text-[#a78bfa] text-[11px] font-semibold"
+                className="shrink-0 px-2.5 py-1.5 rounded-full border border-[#f59e0b]/70 text-[#fbbf24] text-[10px] font-semibold tracking-wide active:bg-[#f59e0b]/15"
               >
                 $25
               </button>
