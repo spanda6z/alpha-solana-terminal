@@ -1,113 +1,154 @@
 "use client";
 
-import { useState } from "react";
-import { Search } from "lucide-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { MarketBoard, type SelectedToken } from "@/components/MarketBoard";
-import { TokenPanel } from "@/components/TokenPanel";
-import { BotPanel } from "@/components/BotPanel";
-import { FirehosePanel } from "@/components/FirehosePanel";
-import { RapSheetPanel } from "@/components/RapSheetPanel";
-import { AccountPanel } from "@/components/AccountPanel";
-
-type Tab = "market" | "firehose" | "bots" | "rapsheet" | "account";
+import { useState, useCallback } from "react";
+import { Shell } from "@/components/solbit/Shell";
+import { Landing } from "@/components/solbit/Landing";
+import { MarketView } from "@/components/solbit/Market";
+import { DeskView } from "@/components/solbit/Desk";
+import {
+  FlowMarket,
+  SmartMarket,
+  RapSheet,
+  WatchView,
+} from "@/components/solbit/SimpleViews";
+import type { NavId, SelectedToken } from "@/components/solbit/types";
+import { searchTokens } from "@/lib/tokens";
+import clsx from "clsx";
 
 export default function Home() {
-  const [tab, setTab] = useState<Tab>("market");
+  const [entered, setEntered] = useState(false);
+  const [nav, setNav] = useState<NavId>("market");
   const [selected, setSelected] = useState<SelectedToken | null>(null);
-  const [search, setSearch] = useState("");
+  const [watchlist, setWatchlist] = useState<SelectedToken[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const [searchHits, setSearchHits] = useState<SelectedToken[]>([]);
+  const [status, setStatus] = useState("READY");
 
-  const openToken = (token: SelectedToken) => {
-    setSelected(token);
-    setTab("market");
+  const openDesk = useCallback((t: SelectedToken) => {
+    setSelected(t);
+    setNav("desk");
+    setWatchlist((w) => {
+      if (w.some((x) => x.mint === t.mint)) return w;
+      return [t, ...w].slice(0, 12);
+    });
+    setStatus(`DESK · ${t.symbol || t.mint.slice(0, 6)}`);
+    setSearchOpen(false);
+  }, []);
+
+  const onNav = (n: NavId) => {
+    if (n === "landing") {
+      setEntered(false);
+      return;
+    }
+    setNav(n);
+    if (n !== "desk") setStatus(n.toUpperCase());
+    if (n === "desk" && !selected) setStatus("DESK · SELECT TOKEN FROM MARKET");
   };
 
-  const navigate = (next: Tab) => {
-    setTab(next);
-    if (next !== "market" && next !== "firehose") setSelected(null);
+  const runSearch = async (q: string) => {
+    setSearchQ(q);
+    if (q.trim().length < 2) {
+      setSearchHits([]);
+      return;
+    }
+    const rows = await searchTokens(q);
+    setSearchHits(
+      rows.slice(0, 12).map((r) => ({
+        mint: r.mint,
+        symbol: r.symbol,
+        name: r.name,
+        pairAddress: r.pairAddress,
+      }))
+    );
   };
+
+  if (!entered) {
+    return <Landing onEnter={() => setEntered(true)} />;
+  }
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-[#050505] text-[#ececec] flex flex-col">
-      <header className="h-12 shrink-0 border-b border-[#1a1a1a] flex items-center gap-2 px-2 sm:px-3 bg-[#050505]">
-        <button onClick={() => navigate("market")} className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-md bg-[#ff6b00] flex items-center justify-center">
-            <span className="mono text-[14px] font-bold text-[#050505] leading-none">α</span>
-          </div>
-          <span className="hidden sm:inline mono text-[13px] font-semibold tracking-tight text-[#ff6b00]">ALPHA</span>
-        </button>
-
-        <div className="hidden sm:flex items-center gap-2 flex-1 max-w-xl ml-2">
-          <Search size={13} className="text-[#4a4a4a]" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                navigate("market");
+    <>
+      <Shell
+        nav={nav}
+        onNav={onNav}
+        onSearch={() => setSearchOpen(true)}
+        status={status}
+        watchlist={watchlist}
+        onSelectWatch={openDesk}
+      >
+        {nav === "market" && <MarketView onOpenDesk={openDesk} />}
+        {nav === "desk" && selected && (
+          <div className={clsx("h-full", "desk-overlay md:static")}>
+            <DeskView
+              token={selected}
+              onClose={() => {
                 setSelected(null);
-              }
-            }}
-            placeholder="SEARCH TOKEN / MINT / WALLET"
-            className="w-full bg-transparent outline-none mono text-[10px] text-[#ececec] placeholder:text-[#3d3d3d]"
-          />
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <span className="hidden md:inline-flex items-center gap-1 mono text-[9px] text-[#6b6b6b]">
-            <span className="text-[#22c55e]">●</span> NODE LIVE
-          </span>
-          <WalletMultiButton />
-        </div>
-      </header>
-
-      <div className="h-7 shrink-0 border-b border-[#1a1a1a] bg-[#090909] px-3 flex items-center gap-4 mono text-[9px] text-[#4a4a4a] overflow-x-auto">
-        <span className="text-[#22c55e]">● LIVE</span>
-        <span>DEXSCREENER</span>
-        <span>JUPITER</span>
-        <span>SOLANA MAINNET</span>
-        {search && <span className="text-[#ff6b00]">QUERY: {search}</span>}
-      </div>
-
-      <main className="flex-1 min-h-0 flex relative">
-        <div className="flex-1 min-w-0 overflow-hidden">
-          {tab === "market" && <MarketBoard onSelect={setSelected} selected={selected?.mint ?? null} />}
-          {tab === "firehose" && <FirehosePanel onSelect={openToken} />}
-          {tab === "bots" && <BotPanel />}
-          {tab === "rapsheet" && <RapSheetPanel />}
-          {tab === "account" && <AccountPanel />}
-        </div>
-
-        {selected && (tab === "market" || tab === "firehose") && (
-          <div className="trade-sheet md:relative md:w-full md:max-w-[430px] md:border-l md:border-[#1a1a1a] bg-[#0a0a0a] overflow-y-auto shrink-0">
-            <TokenPanel
-              mint={selected.mint}
-              pairAddress={selected.pairAddress}
-              symbol={selected.symbol}
-              onClose={() => setSelected(null)}
-              onOpenBot={() => navigate("bots")}
+                setNav("market");
+              }}
+              onBack={() => setNav("market")}
             />
           </div>
         )}
-      </main>
+        {nav === "desk" && !selected && (
+          <div className="p-6 mono text-[12px] text-[#8b909a]">
+            Select a token from MARKET to open DESK.
+          </div>
+        )}
+        {nav === "flow" && <FlowMarket />}
+        {nav === "smart" && <SmartMarket />}
+        {nav === "rap" && <RapSheet />}
+        {nav === "watch" && (
+          <WatchView
+            items={watchlist}
+            onOpen={(mint) => {
+              const t = watchlist.find((x) => x.mint === mint);
+              if (t) openDesk(t);
+            }}
+          />
+        )}
+      </Shell>
 
-      <nav className="h-12 shrink-0 border-t border-[#1a1a1a] bg-[#070707] grid grid-cols-5">
-        {([
-          ["market", "MARKET"],
-          ["firehose", "FIREHOSE"],
-          ["bots", "BOTS"],
-          ["rapsheet", "RAP SHEET"],
-          ["account", "ACCOUNT"],
-        ] as [Tab, string][]).map(([id, label]) => (
-          <button
-            key={id}
-            onClick={() => navigate(id)}
-            className={`mono text-[9px] sm:text-[10px] tracking-wider border-t-2 transition ${tab === id ? "border-[#ff6b00] text-[#ff6b00]" : "border-transparent text-[#5a5a5a] hover:text-[#ececec]"}`}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-    </div>
+      {searchOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center pt-16 px-4">
+          <div className="w-full max-w-lg border border-[#1c1e24] bg-[#0c0d10]">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[#1c1e24]">
+              <span className="mono text-[11px] text-[#3d9eff]">SEARCH</span>
+              <button
+                onClick={() => setSearchOpen(false)}
+                className="mono text-[10px] text-[#8b909a]"
+              >
+                CLOSE
+              </button>
+            </div>
+            <div className="p-3">
+              <input
+                autoFocus
+                value={searchQ}
+                onChange={(e) => runSearch(e.target.value)}
+                placeholder="Token / CA / symbol"
+                className="sb-input"
+              />
+            </div>
+            <div className="max-h-72 overflow-y-auto border-t border-[#1c1e24]">
+              {searchHits.map((h) => (
+                <button
+                  key={h.mint}
+                  onClick={() => openDesk(h)}
+                  className="w-full text-left px-3 py-3 border-b border-[#111318] mono text-[12px] hover:bg-[#111318]"
+                >
+                  <span className="text-[#e8eaed]">{h.symbol}</span>
+                  <span className="text-[#4a4f5a] ml-2 text-[10px]">{h.name}</span>
+                  <div className="text-[9px] text-[#4a4f5a] mt-0.5">Open Desk →</div>
+                </button>
+              ))}
+              {searchQ.length > 1 && !searchHits.length && (
+                <div className="p-4 mono text-[11px] text-[#4a4f5a]">NO RESULTS</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
