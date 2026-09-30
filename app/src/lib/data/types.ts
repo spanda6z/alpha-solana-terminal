@@ -7,7 +7,7 @@ export type EventKind =
   | "WALLET"
   | "AUTHORITY";
 
-export type EventSource = "dexscreener" | "helius" | "solana-rpc" | "unknown";
+export type EventSource = "birdeye" | "dexscreener" | "helius" | "solana-rpc" | "unknown";
 
 export interface NormalizedEvent {
   id: string;
