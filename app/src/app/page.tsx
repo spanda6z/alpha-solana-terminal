@@ -17,6 +17,7 @@ import { TokenDesk } from "@/components/desk/TokenDesk";
 import { BotsView } from "@/components/desk/Bots";
 import { RapSheetView } from "@/components/desk/RapSheet";
 import { AccountView } from "@/components/desk/Account";
+import { LeadersView } from "@/components/desk/Leaders";
 import type { Tab, SelectedToken } from "@/components/desk/types";
 import clsx from "clsx";
 import { PublicKey } from "@solana/web3.js";
@@ -36,6 +37,7 @@ export default function DeskApp() {
   const [token, setToken] = useState<SelectedToken | null>(null);
   const [watch, setWatch] = useState<string[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [leaders, setLeaders] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const { connected } = useWallet();
   const { buyWithSol } = useSwap();
@@ -89,6 +91,7 @@ export default function DeskApp() {
           onClick={() => {
             setTab("market");
             setToken(null);
+            setLeaders(false);
           }}
           className="w-9 h-9 rounded-full bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]"
         >
@@ -101,19 +104,26 @@ export default function DeskApp() {
 
       <main className="flex-1 min-h-0 flex relative">
         <div className={clsx("flex-1 min-w-0 min-h-0 overflow-hidden", token && "hidden md:block")}>
-          {(tab === "market" || tab === "firehose") && (
+          {(tab === "market" || tab === "firehose") && !leaders && (
             <Board
               mode={tab === "firehose" ? "firehose" : "market"}
               onOpenToken={setToken}
               onQuickBuy={quickBuy}
               watchlist={watch}
               onToggleWatch={toggleWatch}
+              onOpenLeaders={() => setLeaders(true)}
             />
           )}
           {tab === "bots" && <BotsView />}
           {tab === "rap" && <RapSheetView />}
           {tab === "account" && <AccountView watchCount={watch.length} />}
         </div>
+
+        {leaders && !token && (
+          <div className="absolute inset-0 z-20 bg-[#0b0b12]">
+            <LeadersView onBack={() => setLeaders(false)} />
+          </div>
+        )}
 
         {token && (
           <TokenDesk
@@ -129,7 +139,7 @@ export default function DeskApp() {
         )}
       </main>
 
-      {!token && (
+      {!token && !leaders && (
         <nav className="h-[58px] shrink-0 border-t border-[#252536] bg-[#0b0b12] flex items-stretch pb-[env(safe-area-inset-bottom)]">
           {TABS.map((t) => {
             const Icon = t.icon;
@@ -140,6 +150,7 @@ export default function DeskApp() {
                 onClick={() => {
                   setTab(t.id);
                   setToken(null);
+                  setLeaders(false);
                 }}
                 className={clsx(
                   "flex-1 flex flex-col items-center justify-center gap-0.5 text-[9px] font-semibold tracking-wide",
