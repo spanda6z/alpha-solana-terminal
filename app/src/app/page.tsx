@@ -19,6 +19,7 @@ import { RapSheetView } from "@/components/desk/RapSheet";
 import { AccountView } from "@/components/desk/Account";
 import { LeadersView } from "@/components/desk/Leaders";
 import type { Tab, SelectedToken } from "@/components/desk/types";
+import { AlphaMark, AlphaWordmark } from "@/components/brand/Logo";
 import clsx from "clsx";
 import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -72,33 +73,42 @@ export default function DeskApp() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#0b0b12] text-[#f4f4f8]">
-      <header className="h-12 shrink-0 border-b border-[#252536] flex items-center gap-2 px-2.5">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center text-[11px] font-bold shrink-0">
-          ∞
+    <div className="min-h-[100dvh] flex flex-col bg-[#0a0a0f] text-[#f4f4f8]">
+      <header className="shrink-0 border-b border-[#252536]">
+        <div className="h-7 px-3 flex items-center justify-between bg-gradient-to-r from-[#1a1408] via-[#0a0a0f] to-[#0a0a0f] border-b border-[#252536]/60">
+          <span className="text-[9px] tracking-[0.22em] text-[#f59e0b] font-semibold">
+            SOLANA MARKET TERMINAL
+          </span>
+          <span className="text-[9px] text-[#5c5c72] tracking-wide">READ FIRST · TRADE SECOND</span>
         </div>
-        <button
-          onClick={() => setSearchOpen(true)}
-          className="flex-1 h-9 rounded-full bg-[#12121c] border border-[#252536] px-3 flex items-center gap-2 text-[#5c5c72] text-[13px]"
-        >
-          <Search size={14} />
-          <span>search</span>
-        </button>
-        <button className="w-9 h-9 rounded-full bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]">
-          <Crosshair size={16} />
-        </button>
-        <button
-          onClick={() => {
-            setTab("market");
-            setToken(null);
-            setLeaders(false);
-          }}
-          className="w-9 h-9 rounded-full bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]"
-        >
-          <Home size={16} />
-        </button>
-        <div className="shrink-0 scale-90 origin-right">
-          <WalletMultiButton />
+        <div className="h-12 flex items-center gap-2 px-2.5">
+          <div className="flex items-center gap-2 shrink-0 pr-1">
+            <AlphaMark size={28} />
+            <AlphaWordmark />
+          </div>
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="flex-1 h-9 rounded-lg bg-[#12121c] border border-[#252536] px-3 flex items-center gap-2 text-[#5c5c72] text-[13px]"
+          >
+            <Search size={14} />
+            <span>search mint / symbol</span>
+          </button>
+          <button className="w-9 h-9 rounded-lg bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]">
+            <Crosshair size={16} />
+          </button>
+          <button
+            onClick={() => {
+              setTab("market");
+              setToken(null);
+              setLeaders(false);
+            }}
+            className="w-9 h-9 rounded-lg bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]"
+          >
+            <Home size={16} />
+          </button>
+          <div className="shrink-0 scale-90 origin-right">
+            <WalletMultiButton />
+          </div>
         </div>
       </header>
 
@@ -120,7 +130,7 @@ export default function DeskApp() {
         </div>
 
         {leaders && !token && (
-          <div className="absolute inset-0 z-20 bg-[#0b0b12]">
+          <div className="absolute inset-0 z-20 bg-[#0a0a0f]">
             <LeadersView onBack={() => setLeaders(false)} />
           </div>
         )}
@@ -140,7 +150,7 @@ export default function DeskApp() {
       </main>
 
       {!token && !leaders && (
-        <nav className="h-[58px] shrink-0 border-t border-[#252536] bg-[#0b0b12] flex items-stretch pb-[env(safe-area-inset-bottom)]">
+        <nav className="h-[58px] shrink-0 border-t border-[#252536] bg-[#0a0a0f] flex items-stretch pb-[env(safe-area-inset-bottom)]">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -154,7 +164,7 @@ export default function DeskApp() {
                 }}
                 className={clsx(
                   "flex-1 flex flex-col items-center justify-center gap-0.5 text-[9px] font-semibold tracking-wide",
-                  active ? "text-[#a78bfa]" : "text-[#5c5c72]"
+                  active ? "text-[#f59e0b]" : "text-[#5c5c72]"
                 )}
               >
                 <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
@@ -169,7 +179,7 @@ export default function DeskApp() {
         <div className="fixed inset-0 z-[60] bg-black/70 flex items-start pt-16 px-3">
           <div className="w-full max-w-lg mx-auto card p-3">
             <div className="flex justify-between mb-2">
-              <span className="text-[12px] font-semibold text-[#a78bfa]">SEARCH</span>
+              <span className="text-[12px] font-semibold text-[#fbbf24]">SEARCH</span>
               <button onClick={() => setSearchOpen(false)} className="text-[#5c5c72] text-[12px]">
                 CLOSE
               </button>
