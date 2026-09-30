@@ -33,7 +33,7 @@ export function Shell({
 }) {
   return (
     <div className="h-[100dvh] flex flex-col bg-[#05070A] text-[#F5F7FA] overflow-hidden">
-      <header className="h-11 shrink-0 border-b border-[#151B22] flex items-center justify-between px-3 gap-2">
+      <header className="shell-header h-11 shrink-0 border-b border-[#151B22] flex items-center justify-between px-3 gap-2 z-20">
         <button onClick={() => onNav("discover")} className="flex items-center gap-2 shrink-0">
           <div className="w-7 h-7 rounded bg-[#3d9eff] flex items-center justify-center mono text-[11px] font-bold text-[#05070A]">
             SB
@@ -47,7 +47,7 @@ export function Shell({
               key={n.id}
               onClick={() => onNav(n.id)}
               className={clsx(
-                "px-3 py-1.5 mono text-[10px] tracking-wide border-b-2",
+                "nav-tab px-3 py-1.5 mono text-[10px] tracking-wide border-b-2",
                 nav === n.id || (n.id === "discover" && nav === "markets")
                   ? "border-[#3d9eff] text-[#3d9eff]"
                   : "border-transparent text-[#7D8794]"
@@ -75,13 +75,13 @@ export function Shell({
       <main className="flex-1 min-h-0 overflow-hidden flex flex-col">{children}</main>
 
       {!hideMobileNav && (
-        <nav className="md:hidden h-14 shrink-0 border-t border-[#151B22] bg-[#05070A] flex items-stretch pb-[env(safe-area-inset-bottom)]">
+        <nav className="md:hidden h-14 shrink-0 border-t border-[#151B22] bg-[#05070A]/95 backdrop-blur-sm flex items-stretch pb-[env(safe-area-inset-bottom)] z-20">
           {MOBILE_NAV.map((n) => (
             <button
               key={n.id}
               onClick={() => onNav(n.id)}
               className={clsx(
-                "flex-1 flex flex-col items-center justify-center gap-0.5 mono text-[9px] tracking-wide",
+                "nav-tab flex-1 flex flex-col items-center justify-center gap-0.5 mono text-[9px] tracking-wide",
                 nav === n.id || (n.id === "discover" && nav === "markets")
                   ? "text-[#3d9eff]"
                   : "text-[#7D8794]"
