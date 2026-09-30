@@ -5,7 +5,6 @@ import clsx from "clsx";
 import { Star } from "lucide-react";
 import {
   fetchMarketTokens,
-  searchTokens,
   type MarketMode,
   type TokenRow,
 } from "@/lib/tokens";
@@ -26,7 +25,6 @@ const verdictCls: Record<Verdict, string> = {
   UNKNOWN: "text-[#5e5e70]",
 };
 
-/** Quick buy size in SOL — Jupiter market buy, not a USD label */
 const QUICK_SOL = 0.1;
 
 const CATEGORIES: { id: MarketCategory; label: string; mode?: MarketMode }[] = [
@@ -37,6 +35,7 @@ const CATEGORIES: { id: MarketCategory; label: string; mode?: MarketMode }[] = [
   { id: "volume", label: "HIGH VOLUME", mode: "volume" },
   { id: "liquidity", label: "HIGH LIQ", mode: "liquidity" },
   { id: "unusual", label: "UNUSUAL" },
+  { id: "whale", label: "WHALE" },
   { id: "watched", label: "WATCHED" },
 ];
 
@@ -96,6 +95,16 @@ export function Board({
           [...all]
             .filter((t) => t.liqRaw >= 2000)
             .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
+            .slice(0, 80)
+        );
+        return;
+      }
+      if (category === "whale") {
+        const all = await fetchMarketTokens(100, "liquidity");
+        setRows(
+          [...all]
+            .filter((t) => t.liqRaw >= 25000 && t.volRaw >= 10000)
+            .sort((a, b) => b.volRaw - a.volRaw)
             .slice(0, 80)
         );
         return;
@@ -184,9 +193,7 @@ export function Board({
               {category === "watched" ? "Watchlist empty" : "No tokens in this view"}
             </div>
             <div className="text-[11px] text-[#5e5e70]">
-              {category === "watched"
-                ? "Star tokens from any category"
-                : "Switch category or refresh"}
+              {category === "watched" ? "Star tokens from any category" : "Switch category or refresh"}
             </div>
           </div>
         )}
@@ -203,11 +210,7 @@ export function Board({
                 onClick={() => onOpenToken(rowToSelected(t))}
               >
                 {t.imageUrl ? (
-                  <img
-                    src={t.imageUrl}
-                    alt=""
-                    className="w-9 h-9 rounded-full object-cover bg-[#18181f] shrink-0"
-                  />
+                  <img src={t.imageUrl} alt="" className="w-9 h-9 rounded-full object-cover bg-[#18181f] shrink-0" />
                 ) : (
                   <div className="w-9 h-9 rounded-full bg-[#18181f] flex items-center justify-center text-[12px] font-bold text-[#fbbf24] shrink-0">
                     {(t.symbol || "?")[0]}
@@ -221,9 +224,7 @@ export function Board({
                       {v === "BLUE CHIP" ? "BLUE CHIP" : v}
                     </span>
                   </div>
-                  <div className="text-[11px] text-[#9898a8] mt-0.5 truncate">
-                    V {t.vol} · L {t.liq}
-                  </div>
+                  <div className="text-[11px] text-[#9898a8] mt-0.5 truncate">V {t.vol} · L {t.liq}</div>
                 </div>
                 <div className="text-right shrink-0 w-16">
                   <div className="font-semibold text-[13px] tabular-nums">{t.mcap}</div>
@@ -231,27 +232,18 @@ export function Board({
                 <div
                   className={clsx(
                     "text-right shrink-0 w-14 text-[11px] font-medium tabular-nums",
-                    t.change24h >= 0.05
-                      ? "text-[#34d399]"
-                      : t.change24h <= -0.05
-                      ? "text-[#f87171]"
-                      : "text-[#9898a8]"
+                    t.change24h >= 0.05 ? "text-[#34d399]" : t.change24h <= -0.05 ? "text-[#f87171]" : "text-[#9898a8]"
                   )}
                 >
-                  {t.change24h >= 0 ? "+" : ""}
-                  {t.change24h.toFixed(1)}%
+                  {t.change24h >= 0 ? "+" : ""}{t.change24h.toFixed(1)}%
                 </div>
               </button>
-              <button
-                onClick={() => onToggleWatch(t.mint)}
-                className={clsx("p-1", watched ? "text-[#fbbf24]" : "text-[#5e5e70]")}
-                title="Watch"
-              >
+              <button onClick={() => onToggleWatch(t.mint)} className={clsx("p-1", watched ? "text-[#fbbf24]" : "text-[#5e5e70]")} title="Watch">
                 <Star size={14} fill={watched ? "currentColor" : "none"} />
               </button>
               <button
                 onClick={() => onQuickBuy?.(rowToSelected(t), QUICK_SOL)}
-                title={`Buy ${QUICK_SOL} SOL of ${t.symbol || "token"} via Jupiter`}
+                title={`Buy ${QUICK_SOL} SOL via Jupiter`}
                 className="shrink-0 min-w-[48px] px-2 py-1.5 rounded-full border border-[#f59e0b]/70 text-[#fbbf24] text-[10px] font-semibold tracking-wide active:bg-[#f59e0b]/15"
               >
                 {QUICK_SOL}◎
