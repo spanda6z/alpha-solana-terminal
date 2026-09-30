@@ -21,13 +21,13 @@ const verdictCls: Record<Verdict, string> = {
   UNKNOWN: "text-[#5c5c72]",
 };
 
-function rowToSelected(t: TokenRow): SelectedToken {
+function rowToSelected(t: TokenRow & { verdict?: Verdict }): SelectedToken {
   return {
     mint: t.mint,
     pairAddress: t.pairAddress,
     symbol: t.symbol,
     name: t.name,
-    verdict: toVerdict(t.risk),
+    verdict: t.verdict || toVerdict(t.risk),
     price: t.price,
     change24h: t.change24h,
     mcap: t.mcap,
@@ -91,11 +91,17 @@ export function Board({
   }, [mode]);
 
   const list = useMemo(() => {
-    let r = rows.map((t) => ({ ...t, verdict: toVerdict(t.risk) }));
+    let r = rows.map((t) => {
+      let verdict = toVerdict(t.risk);
+      if (t.liqRaw >= 500000 && (verdict === "SAFE" || verdict === "UNKNOWN"))
+        verdict = "BLUE CHIP";
+      return { ...t, verdict };
+    });
     if (filter === "SAFE") r = r.filter((t) => t.verdict === "SAFE" || t.verdict === "BLUE CHIP");
     if (filter === "FLAGGED") r = r.filter((t) => t.verdict === "DANGER" || t.verdict === "CAUTION");
     if (filter === "ALIVE" || filter === "LIQ1K") r = r.filter((t) => t.liqRaw >= 1000);
-    if (filter === "BLUE CHIP") r = r.filter((t) => t.verdict === "BLUE CHIP");
+    if (filter === "BLUE CHIP")
+      r = r.filter((t) => t.verdict === "BLUE CHIP" || t.liqRaw >= 500000);
     if (filter === "WATCH") r = r.filter((t) => watchlist.includes(t.mint));
     if (sort === "VOL") r.sort((a, b) => b.volRaw - a.volRaw);
     if (sort === "MC") r.sort((a, b) => b.mcapRaw - a.mcapRaw);
@@ -113,11 +119,11 @@ export function Board({
           { id: "FLAGGED", label: "FLAGGED" },
         ]
       : [
-          { id: "WATCH", label: "★ WATCHLIST" },
-          { id: "ALL", label: "ALL" },
           { id: "SAFE", label: "SAFE" },
           { id: "FLAGGED", label: "FLAGGED" },
           { id: "ALIVE", label: "ALIVE" },
+          { id: "BLUE CHIP", label: "BLUE CHIP" },
+          { id: "WATCH", label: "MY BAG" },
         ];
 
   return (
