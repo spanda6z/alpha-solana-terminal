@@ -39,6 +39,33 @@ export default function SolbitApp() {
     }
   }, [watch]);
 
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("solbit_entered") === "1") {
+        setNav((n) => (n === "landing" ? "discover" : n));
+      }
+    } catch {
+      /* */
+    }
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const mint = sp.get("mint");
+      if (mint && mint.length >= 32) {
+        setNav("discover");
+        setToken({
+          mint,
+          symbol: mint.slice(0, 4) + "…",
+          name: "Loading…",
+        });
+        try {
+          sessionStorage.setItem("solbit_entered", "1");
+        } catch {
+          /* */
+        }
+      }
+    }
+  }, []);
+
   const openDesk = useCallback(
     (t: SelectedToken) => {
       setToken(t);
@@ -52,7 +79,18 @@ export default function SolbitApp() {
   }, []);
 
   if (nav === "landing" && !token) {
-    return <Landing onEnter={() => setNav("discover")} />;
+    return (
+      <Landing
+        onEnter={() => {
+          try {
+            sessionStorage.setItem("solbit_entered", "1");
+          } catch {
+            /* */
+          }
+          setNav("discover");
+        }}
+      />
+    );
   }
 
   return (
@@ -99,7 +137,10 @@ export default function SolbitApp() {
           <div className="w-full max-w-lg mx-auto sb-panel p-3">
             <div className="flex justify-between mb-2">
               <span className="mono text-[11px] font-semibold text-[#3d9eff]">SEARCH</span>
-              <button onClick={() => setSearchOpen(false)} className="mono text-[11px] text-[#7D8794]">
+              <button
+                onClick={() => setSearchOpen(false)}
+                className="mono text-[11px] text-[#7D8794]"
+              >
                 CLOSE
               </button>
             </div>
