@@ -1,154 +1,128 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Shell } from "@/components/solbit/Shell";
-import { Landing } from "@/components/solbit/Landing";
-import { MarketView } from "@/components/solbit/Market";
-import { DeskView } from "@/components/solbit/Desk";
-import {
-  FlowMarket,
-  SmartMarket,
-  RapSheet,
-  WatchView,
-} from "@/components/solbit/SimpleViews";
-import type { NavId, SelectedToken } from "@/components/solbit/types";
-import { searchTokens } from "@/lib/tokens";
+import { useCallback, useEffect, useState } from "react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Board } from "@/components/desk/Board";
+import { TokenDesk } from "@/components/desk/TokenDesk";
+import { BotsView } from "@/components/desk/Bots";
+import { RapSheetView } from "@/components/desk/RapSheet";
+import { AccountView } from "@/components/desk/Account";
+import type { Tab, SelectedToken } from "@/components/desk/types";
 import clsx from "clsx";
+import { PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useSwap } from "@/hooks/useSwap";
 
-export default function Home() {
-  const [entered, setEntered] = useState(false);
-  const [nav, setNav] = useState<NavId>("market");
-  const [selected, setSelected] = useState<SelectedToken | null>(null);
-  const [watchlist, setWatchlist] = useState<SelectedToken[]>([]);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQ, setSearchQ] = useState("");
-  const [searchHits, setSearchHits] = useState<SelectedToken[]>([]);
-  const [status, setStatus] = useState("READY");
+const TABS: { id: Tab; label: string }[] = [
+  { id: "market", label: "MARKET" },
+  { id: "firehose", label: "FIREHOSE" },
+  { id: "bots", label: "BOTS" },
+  { id: "rap", label: "RAP SHEET" },
+  { id: "account", label: "ACCOUNT" },
+];
 
-  const openDesk = useCallback((t: SelectedToken) => {
-    setSelected(t);
-    setNav("desk");
-    setWatchlist((w) => {
-      if (w.some((x) => x.mint === t.mint)) return w;
-      return [t, ...w].slice(0, 12);
-    });
-    setStatus(`DESK · ${t.symbol || t.mint.slice(0, 6)}`);
-    setSearchOpen(false);
+export default function DeskApp() {
+  const [tab, setTab] = useState<Tab>("market");
+  const [token, setToken] = useState<SelectedToken | null>(null);
+  const [watch, setWatch] = useState<string[]>([]);
+  const { connected } = useWallet();
+  const { buyWithSol } = useSwap();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("desk_watch");
+      if (raw) setWatch(JSON.parse(raw));
+    } catch {
+      /* */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("desk_watch", JSON.stringify(watch));
+    } catch {
+      /* */
+    }
+  }, [watch]);
+
+  const toggleWatch = useCallback((mint: string) => {
+    setWatch((w) => (w.includes(mint) ? w.filter((x) => x !== mint) : [...w, mint]));
   }, []);
 
-  const onNav = (n: NavId) => {
-    if (n === "landing") {
-      setEntered(false);
-      return;
-    }
-    setNav(n);
-    if (n !== "desk") setStatus(n.toUpperCase());
-    if (n === "desk" && !selected) setStatus("DESK · SELECT TOKEN FROM MARKET");
-  };
+  const openToken = (t: SelectedToken) => setToken(t);
 
-  const runSearch = async (q: string) => {
-    setSearchQ(q);
-    if (q.trim().length < 2) {
-      setSearchHits([]);
-      return;
+  const quickBuy = async (t: SelectedToken) => {
+    if (!connected) return;
+    try {
+      await buyWithSol(new PublicKey(t.mint), 0.1, 100);
+    } catch {
+      /* */
     }
-    const rows = await searchTokens(q);
-    setSearchHits(
-      rows.slice(0, 12).map((r) => ({
-        mint: r.mint,
-        symbol: r.symbol,
-        name: r.name,
-        pairAddress: r.pairAddress,
-      }))
-    );
   };
-
-  if (!entered) {
-    return <Landing onEnter={() => setEntered(true)} />;
-  }
 
   return (
-    <>
-      <Shell
-        nav={nav}
-        onNav={onNav}
-        onSearch={() => setSearchOpen(true)}
-        status={status}
-        watchlist={watchlist}
-        onSelectWatch={openDesk}
-      >
-        {nav === "market" && <MarketView onOpenDesk={openDesk} />}
-        {nav === "desk" && selected && (
-          <div className={clsx("h-full", "desk-overlay md:static")}>
-            <DeskView
-              token={selected}
-              onClose={() => {
-                setSelected(null);
-                setNav("market");
-              }}
-              onBack={() => setNav("market")}
+    <div className="min-h-[100dvh] flex flex-col bg-[#0a0a0b] text-[#f0f0f2]">
+      <header className="h-11 shrink-0 border-b border-[#1e1e22] flex items-center justify-between px-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded bg-[#a3e635] flex items-center justify-center mono text-[11px] font-bold text-[#0a0a0b]">
+            DK
+          </div>
+          <div>
+            <div className="mono text-[12px] font-semibold leading-none">THE DESK</div>
+            <div className="mono text-[8px] text-[#52525b] tracking-wider">SOLANA</div>
+          </div>
+        </div>
+        <WalletMultiButton />
+      </header>
+
+      <main className="flex-1 min-h-0 flex relative">
+        <div className={clsx("flex-1 min-w-0 min-h-0 overflow-hidden", token && "hidden md:block")}>
+          {(tab === "market" || tab === "firehose") && (
+            <Board
+              mode={tab === "firehose" ? "firehose" : "market"}
+              onOpenToken={openToken}
+              onQuickBuy={quickBuy}
+              watchlist={watch}
+              onToggleWatch={toggleWatch}
             />
-          </div>
-        )}
-        {nav === "desk" && !selected && (
-          <div className="p-6 mono text-[12px] text-[#8b909a]">
-            Select a token from MARKET to open DESK.
-          </div>
-        )}
-        {nav === "flow" && <FlowMarket />}
-        {nav === "smart" && <SmartMarket />}
-        {nav === "rap" && <RapSheet />}
-        {nav === "watch" && (
-          <WatchView
-            items={watchlist}
-            onOpen={(mint) => {
-              const t = watchlist.find((x) => x.mint === mint);
-              if (t) openDesk(t);
+          )}
+          {tab === "bots" && <BotsView />}
+          {tab === "rap" && <RapSheetView />}
+          {tab === "account" && <AccountView watchCount={watch.length} />}
+        </div>
+
+        {token && (
+          <TokenDesk
+            token={token}
+            watched={watch.includes(token.mint)}
+            onClose={() => setToken(null)}
+            onToggleWatch={() => toggleWatch(token.mint)}
+            onOpenBots={() => {
+              setToken(null);
+              setTab("bots");
             }}
           />
         )}
-      </Shell>
+      </main>
 
-      {searchOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-start justify-center pt-16 px-4">
-          <div className="w-full max-w-lg border border-[#1c1e24] bg-[#0c0d10]">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[#1c1e24]">
-              <span className="mono text-[11px] text-[#3d9eff]">SEARCH</span>
-              <button
-                onClick={() => setSearchOpen(false)}
-                className="mono text-[10px] text-[#8b909a]"
-              >
-                CLOSE
-              </button>
-            </div>
-            <div className="p-3">
-              <input
-                autoFocus
-                value={searchQ}
-                onChange={(e) => runSearch(e.target.value)}
-                placeholder="Token / CA / symbol"
-                className="sb-input"
-              />
-            </div>
-            <div className="max-h-72 overflow-y-auto border-t border-[#1c1e24]">
-              {searchHits.map((h) => (
-                <button
-                  key={h.mint}
-                  onClick={() => openDesk(h)}
-                  className="w-full text-left px-3 py-3 border-b border-[#111318] mono text-[12px] hover:bg-[#111318]"
-                >
-                  <span className="text-[#e8eaed]">{h.symbol}</span>
-                  <span className="text-[#4a4f5a] ml-2 text-[10px]">{h.name}</span>
-                  <div className="text-[9px] text-[#4a4f5a] mt-0.5">Open Desk →</div>
-                </button>
-              ))}
-              {searchQ.length > 1 && !searchHits.length && (
-                <div className="p-4 mono text-[11px] text-[#4a4f5a]">NO RESULTS</div>
+      {!token && (
+        <nav className="h-14 shrink-0 border-t border-[#1e1e22] bg-[#111113] flex items-stretch pb-[env(safe-area-inset-bottom)]">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => {
+                setTab(t.id);
+                setToken(null);
+              }}
+              className={clsx(
+                "flex-1 mono text-[9px] tracking-wide flex flex-col items-center justify-center gap-0.5",
+                tab === t.id ? "text-[#a3e635]" : "text-[#52525b]"
               )}
-            </div>
-          </div>
-        </div>
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
       )}
-    </>
+    </div>
   );
 }
