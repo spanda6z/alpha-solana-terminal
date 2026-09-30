@@ -44,12 +44,14 @@ export function Board({
   onQuickBuy,
   watchlist,
   onToggleWatch,
+  onOpenLeaders,
 }: {
   mode: "market" | "firehose";
   onOpenToken: (t: SelectedToken) => void;
   onQuickBuy?: (t: SelectedToken) => void;
   watchlist: string[];
   onToggleWatch: (mint: string) => void;
+  onOpenLeaders?: () => void;
 }) {
   const [filter, setFilter] = useState<Filter>(mode === "firehose" ? "LIQ1K" : "ALL");
   const [rows, setRows] = useState<TokenRow[]>([]);
@@ -125,7 +127,9 @@ export function Board({
           {loading ? "…" : list.length}
           <span className="font-normal text-[#5c5c72]"> tokens</span>
         </span>
-        <span className="pill text-[10px] !py-1">🏆 LEADERS</span>
+        <button type="button" onClick={() => onOpenLeaders?.()} className="pill text-[10px] !py-1">
+          🏆 LEADERS
+        </button>
         <span className="flex items-center gap-1 shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-[#34d399]" />
           LIVE
