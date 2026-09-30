@@ -1,78 +1,65 @@
 "use client";
 
-export function FlowMarket() {
+export function PlaceholderView({ title, body }: { title: string; body: string }) {
   return (
-    <div className="p-4 max-w-xl">
-      <h2 className="mono text-[14px] font-semibold mb-2">FLOW</h2>
-      <p className="mono text-[11px] text-[#8b909a] leading-relaxed">
-        Market-wide buy/sell pressure, whale flow, and liquidity events need a trade indexer
-        (e.g. Helius webhooks). This panel is wired for that feed — not fabricated activity.
-      </p>
-      <div className="mt-6 mono text-[10px] text-[#4a4f5a]">STATE: INDEXER NOT CONNECTED</div>
-    </div>
-  );
-}
-
-export function SmartMarket() {
-  return (
-    <div className="p-4 max-w-xl">
-      <h2 className="mono text-[14px] font-semibold mb-2">SMART</h2>
-      <p className="mono text-[11px] text-[#8b909a] leading-relaxed">
-        Behavioral observations with evidence and confidence. No chatbot. Signals appear when
-        wallet clustering + history are available.
-      </p>
-      <div className="mt-6 border border-[#1c1e24] p-3 mono text-[11px] text-[#8b909a]">
-        NO MARKET-WIDE SIGNALS · INSUFFICIENT DATA
+    <div className="flex flex-col h-full min-h-0">
+      <div className="px-3 py-2 border-b border-[#151B22]">
+        <span className="mono text-[11px] font-semibold tracking-wide">{title}</span>
+      </div>
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="max-w-sm text-center">
+          <div className="mono text-[12px] text-[#7D8794] tracking-wide mb-2">WAITING FOR DATA</div>
+          <p className="mono text-[11px] text-[#4A5560] leading-relaxed">{body}</p>
+          <p className="mono text-[10px] text-[#4A5560] mt-4">
+            Requires indexed on-chain feed (Helius / Birdeye). No fabricated activity.
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-export function RapSheet() {
+export function FirehoseView() {
   return (
-    <div className="p-4 max-w-xl">
-      <h2 className="mono text-[14px] font-semibold mb-2">RAP SHEET</h2>
-      <p className="mono text-[11px] text-[#8b909a] mb-4">
-        Search wallet / creator / token — investigation graph.
-      </p>
-      <input className="sb-input" placeholder="Wallet / creator / token" disabled />
-      <p className="mt-4 mono text-[10px] text-[#4a4f5a]">
-        Wallet funding graphs and creator history require indexed chain data. UI ready —
-        backend not connected.
-      </p>
+    <PlaceholderView
+      title="FIREHOSE"
+      body="Real-time stream of new pairs, swaps, liquidity events and risk signals. Connect HELIUS_API_KEY for live events."
+    />
+  );
+}
+
+export function SmartMoneyView() {
+  return (
+    <PlaceholderView
+      title="SMART MONEY"
+      body="Tracked wallet activity with documented criteria — not every profitable wallet. Data layer not connected yet."
+    />
+  );
+}
+
+export function WatchView({ count }: { count: number }) {
+  return (
+    <div className="flex flex-col h-full min-h-0">
+      <div className="px-3 py-2 border-b border-[#151B22] flex items-center gap-2">
+        <span className="mono text-[11px] font-semibold tracking-wide">WATCH</span>
+        <span className="mono text-[10px] text-[#7D8794]">{count} saved</span>
+      </div>
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="data-unavailable">
+          {count === 0
+            ? "No watched tokens yet. Open a desk and tap WATCH."
+            : `${count} token(s) in local watchlist. Full cards load when metadata is available.`}
+        </div>
+      </div>
     </div>
   );
 }
 
-export function WatchView({
-  items,
-  onOpen,
-}: {
-  items: { mint: string; symbol?: string }[];
-  onOpen: (mint: string) => void;
-}) {
+export function BotsView() {
   return (
-    <div className="p-4 max-w-xl">
-      <h2 className="mono text-[14px] font-semibold mb-2">WATCH</h2>
-      <div className="mono text-[10px] text-[#4a4f5a] mb-3">TOKENS · LOCAL SESSION</div>
-      {!items.length && (
-        <p className="mono text-[11px] text-[#8b909a]">Open tokens from Market to fill watchlist.</p>
-      )}
-      <div className="border border-[#1c1e24] divide-y divide-[#1c1e24] mt-2">
-        {items.map((t) => (
-          <button
-            key={t.mint}
-            onClick={() => onOpen(t.mint)}
-            className="w-full text-left px-3 py-3 mono text-[12px] hover:bg-[#0f1115]"
-          >
-            {t.symbol || t.mint.slice(0, 8)}
-          </button>
-        ))}
-      </div>
-      <div className="mt-6">
-        <div className="mono text-[10px] text-[#4a4f5a] tracking-wider mb-2">ALERTS</div>
-        <p className="mono text-[11px] text-[#8b909a]">NO ALERTS · RULE ENGINE NOT CONNECTED</p>
-      </div>
-    </div>
+    <PlaceholderView
+      title="BOTS"
+      body="Monitoring bots (Flow, Liquidity, Wallet, Risk, Volume). Execution stays isolated from discovery — no private keys here."
+    />
   );
 }
