@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTopHolders, hasHelius } from "@/lib/helius";
+import { getMintSwaps, hasHelius } from "@/lib/helius";
 
 export const dynamic = "force-dynamic";
 
@@ -12,24 +12,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: false,
       error: "HELIUS_API_KEY not set",
-      holders: [],
+      trades: [],
       hint: "Add HELIUS_API_KEY in Vercel env",
     });
   }
   try {
-    const holders = await getTopHolders(mint, 20);
-    const top5 = holders.slice(0, 5).reduce((s, h) => s + h.pct, 0);
-    const top10 = holders.slice(0, 10).reduce((s, h) => s + h.pct, 0);
-    return NextResponse.json({
-      ok: true,
-      holders,
-      concentration: { top5, top10 },
-    });
+    const trades = await getMintSwaps(mint, 50);
+    return NextResponse.json({ ok: true, trades });
   } catch (e: any) {
     return NextResponse.json({
       ok: false,
-      error: e?.message || "holders failed",
-      holders: [],
+      error: e?.message || "trades failed",
+      trades: [],
     });
   }
 }
