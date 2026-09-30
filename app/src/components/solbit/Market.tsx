@@ -113,7 +113,8 @@ export function MarketView({
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="shrink-0 px-3 pt-2 pb-1.5 flex items-center gap-2">
-        <span className="mono text-[11px] font-semibold tracking-wide">{title}</span>
+        <span className="mono text-[11px] font-semibold tracking-wide text-[#F5F7FA]">{title}</span>
+        <span className="mono text-[9px] text-[#4A5560] board-count">{list.length}</span>
         <span className="live-dot" />
         <span className="mono text-[9px] text-[#4A5560] ml-auto">
           {updated
@@ -140,7 +141,7 @@ export function MarketView({
             key={f}
             onClick={() => setFilter(f)}
             className={clsx(
-              "mono text-[10px] px-2.5 py-1.5 border tracking-wide whitespace-nowrap",
+              "lens-chip mono text-[10px] px-2.5 py-1.5 border tracking-wide whitespace-nowrap",
               filter === f
                 ? "border-[#3d9eff] text-[#3d9eff] bg-[rgba(61,158,255,0.08)]"
                 : "border-[#151B22] text-[#7D8794]"
@@ -149,6 +150,14 @@ export function MarketView({
             {f}
           </button>
         ))}
+      </div>
+
+      <div className="shrink-0 px-3 pb-1.5 mono text-[9px] text-[#4A5560]">
+        {filter === "GAINERS" && "Moving +15% or more"}
+        {filter === "LOSERS" && "Down 10% or more"}
+        {filter === "TRENDING" && "Ranked by move × volume"}
+        {filter === "NEW" && "Recent listings"}
+        {filter === "VOLUME" && "Highest 24h volume"}
       </div>
 
       <div className="shrink-0 flex px-3 py-1 mono text-[8px] text-[#4A5560] tracking-wider border-y border-[#151B22]">
@@ -189,7 +198,7 @@ export function MarketView({
             <button
               key={t.mint}
               onClick={() => onOpenDesk(toSelected(t))}
-              className="w-full flex items-center gap-2.5 px-3 py-2.5 border-b border-[#0d1218] text-left active:bg-[#0A0E13]"
+              className="row-token w-full flex items-center gap-2.5 px-3 py-2.5 border-b border-[#0d1218] text-left"
             >
               {t.imageUrl ? (
                 <img
