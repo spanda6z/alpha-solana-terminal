@@ -15,6 +15,7 @@ export type SelectedToken = {
   vol?: string;
   age?: string;
   imageUrl?: string;
+  risk?: string;
 };
 
 export type MarketCategory =
