@@ -1,5 +1,7 @@
 "use client";
 
+import { Disclaimer } from "./Disclaimer";
+
 const CAPABILITIES = [
   {
     title: "DISCOVER",
@@ -27,14 +29,7 @@ const CAPABILITIES = [
   },
 ];
 
-const JOURNEY = [
-  "Discover",
-  "Open desk",
-  "Read chart",
-  "Check flow",
-  "Check risk",
-  "Watch",
-];
+const JOURNEY = ["Discover", "Open desk", "Read chart", "Check flow", "Check risk", "Watch"];
 
 export function Landing({ onEnter }: { onEnter: () => void }) {
   return (
@@ -70,8 +65,8 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
             <span className="block text-[#F5F7FA]/90">Understand the risk.</span>
           </p>
           <p className="mt-5 mono text-[11px] text-[#4A5560] fade-up delay-3 max-w-md mx-auto leading-relaxed">
-            A Solana intelligence terminal for discovery, not a casino. No wallet required to explore. No
-            fabricated activity.
+            A Solana intelligence terminal for discovery, not a casino. No wallet required to explore.
+            No fabricated activity.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 justify-center fade-up delay-4">
             <button
@@ -136,6 +131,10 @@ export function Landing({ onEnter }: { onEnter: () => void }) {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="mb-10 fade-up delay-7">
+          <Disclaimer />
         </section>
 
         <section className="text-center pb-10 fade-up delay-8">
