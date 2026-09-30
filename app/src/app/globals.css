@@ -138,3 +138,56 @@ button { cursor: pointer; font-family: inherit; }
   padding: 24px;
   text-align: center;
 }
+
+.token-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  padding-bottom: var(--safe-bottom);
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 960px) {
+  .token-overlay {
+    position: relative;
+    inset: auto;
+    width: 400px;
+    border-left: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+}
+
+/* Landing entrance */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lineGrow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.fade-up {
+  animation: fadeUp 0.55s ease-out both;
+}
+.fade-in {
+  animation: fadeIn 0.6s ease-out both;
+}
+.delay-1 { animation-delay: 0.08s; }
+.delay-2 { animation-delay: 0.16s; }
+.delay-3 { animation-delay: 0.24s; }
+.delay-4 { animation-delay: 0.32s; }
+.delay-5 { animation-delay: 0.4s; }
+.delay-6 { animation-delay: 0.48s; }
+.delay-7 { animation-delay: 0.56s; }
+.delay-8 { animation-delay: 0.64s; }
+.hero-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #3d9eff, transparent);
+  transform-origin: center;
+  animation: lineGrow 0.8s ease-out 0.3s both;
+}
