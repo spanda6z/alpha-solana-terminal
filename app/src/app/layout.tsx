@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "The Desk — Solana",
   description: "Solana trading terminal. Market, firehose, bots, rap sheet.",
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230a0a0b' width='32' height='32'/><text x='16' y='22' text-anchor='middle' font-size='12' font-family='monospace' font-weight='700' fill='%23a3e635'>DK</text></svg>",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230b0b12' width='32' height='32'/><text x='16' y='22' text-anchor='middle' font-size='14' fill='%238b5cf6'>∞</text></svg>",
   },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Desk" },
 };
@@ -16,7 +16,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#0a0a0b",
+  themeColor: "#0b0b12",
   viewportFit: "cover",
 };
 
