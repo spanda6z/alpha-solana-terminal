@@ -5,16 +5,21 @@
 @tailwind utilities;
 
 :root {
+  --brand-amber: #f59e0b;
+  --brand-amber-dim: #d97706;
+  --brand-ink: #0a0a0f;
+  --brand-panel: #101018;
+
   color-scheme: dark;
-  --bg: #0b0b12;
+  --bg: #0a0a0f;
   --surface: #12121c;
   --surface-2: #1a1a28;
   --line: #252536;
   --text: #f4f4f8;
   --muted: #9b9bb0;
   --dim: #5c5c72;
-  --accent: #8b5cf6;
-  --accent-2: #a78bfa;
+  --accent: #f59e0b;
+  --accent-2: #fbbf24;
   --safe: #34d399;
   --caution: #fbbf24;
   --danger: #f87171;
@@ -51,6 +56,7 @@ body {
   font-family: Inter, sans-serif !important;
   padding: 0 14px !important;
   text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
 }
 .wallet-adapter-button-trigger {
   background: transparent !important;
@@ -71,7 +77,7 @@ body {
 .pill.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: #0a0a0f;
 }
 
 .desk-input {
