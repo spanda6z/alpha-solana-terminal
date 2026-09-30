@@ -227,8 +227,11 @@ export async function searchTokens(q: string): Promise<TokenRow[]> {
   return dexSearch(q);
 }
 
-export async function fetchMarketTokens(limit = 80): Promise<TokenRow[]> {
-  const be = await fromBirdeyeApi(undefined, "trending");
+export async function fetchMarketTokens(
+  limit = 80,
+  mode: "trending" | "new" | "volume" = "trending"
+): Promise<TokenRow[]> {
+  const be = await fromBirdeyeApi(undefined, mode);
   if (be.length) {
     const withPairs = await attachPairs(be);
     return withPairs.slice(0, limit);
