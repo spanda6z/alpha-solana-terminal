@@ -2,6 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import {
+  Search,
+  Home,
+  Crosshair,
+  LayoutList,
+  Flame,
+  Bot,
+  Skull,
+  User,
+} from "lucide-react";
 import { Board } from "@/components/desk/Board";
 import { TokenDesk } from "@/components/desk/TokenDesk";
 import { BotsView } from "@/components/desk/Bots";
@@ -13,18 +23,20 @@ import { PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSwap } from "@/hooks/useSwap";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "market", label: "MARKET" },
-  { id: "firehose", label: "FIREHOSE" },
-  { id: "bots", label: "BOTS" },
-  { id: "rap", label: "RAP SHEET" },
-  { id: "account", label: "ACCOUNT" },
+const TABS: { id: Tab; label: string; icon: typeof Home }[] = [
+  { id: "market", label: "MARKET", icon: LayoutList },
+  { id: "firehose", label: "FIREHOSE", icon: Flame },
+  { id: "bots", label: "BOTS", icon: Bot },
+  { id: "rap", label: "RAP SHEET", icon: Skull },
+  { id: "account", label: "ACCOUNT", icon: User },
 ];
 
 export default function DeskApp() {
   const [tab, setTab] = useState<Tab>("market");
   const [token, setToken] = useState<SelectedToken | null>(null);
   const [watch, setWatch] = useState<string[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
   const { connected } = useWallet();
   const { buyWithSol } = useSwap();
 
@@ -48,8 +60,6 @@ export default function DeskApp() {
     setWatch((w) => (w.includes(mint) ? w.filter((x) => x !== mint) : [...w, mint]));
   }, []);
 
-  const openToken = (t: SelectedToken) => setToken(t);
-
   const quickBuy = async (t: SelectedToken) => {
     if (!connected) return;
     try {
@@ -60,18 +70,33 @@ export default function DeskApp() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-[#0a0a0b] text-[#f0f0f2]">
-      <header className="h-11 shrink-0 border-b border-[#1e1e22] flex items-center justify-between px-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-[#a3e635] flex items-center justify-center mono text-[11px] font-bold text-[#0a0a0b]">
-            DK
-          </div>
-          <div>
-            <div className="mono text-[12px] font-semibold leading-none">THE DESK</div>
-            <div className="mono text-[8px] text-[#52525b] tracking-wider">SOLANA</div>
-          </div>
+    <div className="min-h-[100dvh] flex flex-col bg-[#0b0b12] text-[#f4f4f8]">
+      <header className="h-12 shrink-0 border-b border-[#252536] flex items-center gap-2 px-2.5">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center text-[11px] font-bold shrink-0">
+          ∞
         </div>
-        <WalletMultiButton />
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex-1 h-9 rounded-full bg-[#12121c] border border-[#252536] px-3 flex items-center gap-2 text-[#5c5c72] text-[13px]"
+        >
+          <Search size={14} />
+          <span>search</span>
+        </button>
+        <button className="w-9 h-9 rounded-full bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]">
+          <Crosshair size={16} />
+        </button>
+        <button
+          onClick={() => {
+            setTab("market");
+            setToken(null);
+          }}
+          className="w-9 h-9 rounded-full bg-[#12121c] border border-[#252536] flex items-center justify-center text-[#9b9bb0]"
+        >
+          <Home size={16} />
+        </button>
+        <div className="shrink-0 scale-90 origin-right">
+          <WalletMultiButton />
+        </div>
       </header>
 
       <main className="flex-1 min-h-0 flex relative">
@@ -79,7 +104,7 @@ export default function DeskApp() {
           {(tab === "market" || tab === "firehose") && (
             <Board
               mode={tab === "firehose" ? "firehose" : "market"}
-              onOpenToken={openToken}
+              onOpenToken={setToken}
               onQuickBuy={quickBuy}
               watchlist={watch}
               onToggleWatch={toggleWatch}
@@ -105,23 +130,57 @@ export default function DeskApp() {
       </main>
 
       {!token && (
-        <nav className="h-14 shrink-0 border-t border-[#1e1e22] bg-[#111113] flex items-stretch pb-[env(safe-area-inset-bottom)]">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setTab(t.id);
-                setToken(null);
-              }}
-              className={clsx(
-                "flex-1 mono text-[9px] tracking-wide flex flex-col items-center justify-center gap-0.5",
-                tab === t.id ? "text-[#a3e635]" : "text-[#52525b]"
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
+        <nav className="h-[58px] shrink-0 border-t border-[#252536] bg-[#0b0b12] flex items-stretch pb-[env(safe-area-inset-bottom)]">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setTab(t.id);
+                  setToken(null);
+                }}
+                className={clsx(
+                  "flex-1 flex flex-col items-center justify-center gap-0.5 text-[9px] font-semibold tracking-wide",
+                  active ? "text-[#a78bfa]" : "text-[#5c5c72]"
+                )}
+              >
+                <Icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+                {t.label}
+              </button>
+            );
+          })}
         </nav>
+      )}
+
+      {searchOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/70 flex items-start pt-16 px-3">
+          <div className="w-full max-w-lg mx-auto card p-3">
+            <div className="flex justify-between mb-2">
+              <span className="text-[12px] font-semibold text-[#a78bfa]">SEARCH</span>
+              <button onClick={() => setSearchOpen(false)} className="text-[#5c5c72] text-[12px]">
+                CLOSE
+              </button>
+            </div>
+            <input
+              autoFocus
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              placeholder="Token / CA / symbol"
+              className="desk-input"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchQ.trim().length > 20) {
+                  setToken({ mint: searchQ.trim() });
+                  setSearchOpen(false);
+                }
+              }}
+            />
+            <p className="text-[11px] text-[#5c5c72] mt-2">
+              Paste a mint and press Enter, or use the board search.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
