@@ -33,7 +33,7 @@ async function beFetch(path: string, apiKey: string, params?: Record<string, str
       "x-chain": "solana",
       accept: "application/json",
     },
-    next: { revalidate: 30 },
+    cache: "no-store",
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
@@ -115,7 +115,7 @@ export async function birdeyeSearch(apiKey: string, keyword: string, limit = 20)
           price24hChangePercent: x.price_change_24h_percent || x.price24hChangePercent,
           mc: x.market_cap || x.mc || x.fdv,
         }))
-        .filter((t: BirdeyeToken) => t.address);
+        .filter((t: BirdeyeToken) => !!t.address);
     }
     return [];
   } catch {
