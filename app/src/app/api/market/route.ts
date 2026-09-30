@@ -1,56 +1,119 @@
-import { NextResponse } from "next/server";
-import { fetchBirdeyeTokenList, fetchBirdeyeTokenOverview } from "@/lib/data/birdeye";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  birdeyeTrending,
+  birdeyeTokenList,
+  birdeyeNewListings,
+  birdeyeSearch,
+  type BirdeyeToken,
+} from "@/lib/birdeye";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const address = searchParams.get("address");
-  const sort = (searchParams.get("sort") || "volume") as
-    | "volume"
-    | "momentum"
-    | "liquidity"
-    | "market_cap";
+function fmtUsd(n: number | undefined | null): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  if (n >= 0.0001) return `$${n.toFixed(4)}`;
+  return `$${n.toExponential(2)}`;
+}
+
+function fmtPrice(n: number | undefined | null): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  if (n >= 1000) return `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  if (n >= 1) return `$${n.toFixed(2)}`;
+  if (n >= 0.01) return `$${n.toFixed(4)}`;
+  if (n >= 0.0001) return `$${n.toFixed(6)}`;
+  return `$${n.toExponential(2)}`;
+}
+
+function riskFrom(liq: number, change: number): "LOW" | "MED" | "HIGH" | "UNKNOWN" {
+  if (liq < 5000) return "HIGH";
+  if (liq < 50000 || Math.abs(change) > 80) return "MED";
+  if (liq > 200000) return "LOW";
+  return "UNKNOWN";
+}
+
+function mapToken(t: BirdeyeToken) {
+  const price = t.price ?? 0;
+  const liq = t.liquidity ?? 0;
+  const vol = t.volume24hUSD ?? 0;
+  const change = t.price24hChangePercent ?? 0;
+  const mc = t.mc ?? t.marketCap ?? 0;
+  return {
+    mint: t.address,
+    symbol: t.symbol || "???",
+    name: t.name || "",
+    risk: riskFrom(liq, change),
+    price: fmtPrice(price),
+    priceRaw: price,
+    change24h: change,
+    mcap: fmtUsd(mc),
+    mcapRaw: mc,
+    liq: fmtUsd(liq),
+    liqRaw: liq,
+    vol: fmtUsd(vol),
+    volRaw: vol,
+    age: "—",
+    imageUrl: t.logoURI,
+    source: "birdeye",
+  };
+}
+
+export async function GET(req: NextRequest) {
+  const key = process.env.BIRDEYE_API_KEY;
+  const { searchParams } = new URL(req.url);
+  const q = searchParams.get("q") || "";
+  const mode = searchParams.get("mode") || "trending";
+
+  if (!key) {
+    return NextResponse.json(
+      { ok: false, error: "BIRDEYE_API_KEY not set", tokens: [], source: "none" },
+      { status: 200 }
+    );
+  }
 
   try {
-    if (address) {
-      const token = await fetchBirdeyeTokenOverview(address);
-      return NextResponse.json(
-        { source: "birdeye", live: Boolean(token), token, generatedAt: Date.now() },
-        { headers: { "Cache-Control": "no-store" } }
-      );
+    let raw: BirdeyeToken[] = [];
+    if (q.trim().length > 1) {
+      raw = await birdeyeSearch(key, q.trim(), 30);
+    } else if (mode === "new") {
+      raw = await birdeyeNewListings(key, 30);
+    } else if (mode === "volume") {
+      raw = await birdeyeTokenList(key, "v24hUSD", 50);
+    } else {
+      raw = await birdeyeTrending(key, 50);
+      if (raw.length < 10) {
+        const more = await birdeyeTokenList(key, "v24hUSD", 50);
+        const seen = new Set(raw.map((t) => t.address));
+        for (const t of more) {
+          if (t.address && !seen.has(t.address)) {
+            raw.push(t);
+            seen.add(t.address);
+          }
+        }
+      }
     }
 
-    const sortBy =
-      sort === "momentum"
-        ? "volume_24h_change_percent"
-        : sort === "liquidity"
-          ? "liquidity"
-          : sort === "market_cap"
-            ? "market_cap"
-            : "volume_24h_usd";
+    const tokens = raw.filter((t) => t.address).map(mapToken).slice(0, 80);
 
-    const tokens = await fetchBirdeyeTokenList({
-      limit: Math.min(100, Math.max(1, Number(searchParams.get("limit") || 50))),
-      sortBy,
-      minLiquidity: Math.max(0, Number(searchParams.get("minLiquidity") || 100)),
+    return NextResponse.json({
+      ok: true,
+      source: "birdeye",
+      count: tokens.length,
+      tokens,
     });
-
-    return NextResponse.json(
-      { source: "birdeye", live: true, tokens, generatedAt: Date.now() },
-      { headers: { "Cache-Control": "no-store" } }
-    );
-  } catch (error) {
+  } catch (e: any) {
     return NextResponse.json(
       {
-        source: "birdeye",
-        live: false,
+        ok: false,
+        error: e?.message || "Birdeye failed",
         tokens: [],
-        error: error instanceof Error ? error.message : "Birdeye request failed",
-        generatedAt: Date.now(),
+        source: "birdeye",
       },
-      { status: 200, headers: { "Cache-Control": "no-store" } }
+      { status: 200 }
     );
   }
 }
