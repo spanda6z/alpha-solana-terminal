@@ -227,17 +227,39 @@ export async function searchTokens(q: string): Promise<TokenRow[]> {
   return dexSearch(q);
 }
 
+export type MarketMode =
+  | "trending"
+  | "new"
+  | "volume"
+  | "liquidity"
+  | "gainers"
+  | "losers";
+
 export async function fetchMarketTokens(
   limit = 80,
-  mode: "trending" | "new" | "volume" = "trending"
+  mode: MarketMode = "trending"
 ): Promise<TokenRow[]> {
-  const be = await fromBirdeyeApi(undefined, mode);
-  if (be.length) {
-    const withPairs = await attachPairs(be);
-    return withPairs.slice(0, limit);
+  const beMode =
+    mode === "new"
+      ? "new"
+      : mode === "volume" || mode === "liquidity"
+      ? "volume"
+      : "trending";
+  const be = await fromBirdeyeApi(undefined, beMode);
+  let rows = be.length ? await attachPairs(be) : await dexMarket();
+
+  if (mode === "gainers") {
+    rows = [...rows].sort((a, b) => b.change24h - a.change24h);
+  } else if (mode === "losers") {
+    rows = [...rows].sort((a, b) => a.change24h - b.change24h);
+  } else if (mode === "liquidity") {
+    rows = [...rows].sort((a, b) => b.liqRaw - a.liqRaw);
+  } else if (mode === "volume") {
+    rows = [...rows].sort((a, b) => b.volRaw - a.volRaw);
+  } else if (mode === "new") {
+    rows = [...rows].sort((a, b) => a.mcapRaw - b.mcapRaw);
   }
-  const dex = await dexMarket();
-  return dex.slice(0, limit);
+  return rows.slice(0, limit);
 }
 
 export async function fetchWatchlistTokens(): Promise<TokenRow[]> {

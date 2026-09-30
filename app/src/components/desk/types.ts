@@ -17,6 +17,17 @@ export type SelectedToken = {
   imageUrl?: string;
 };
 
+/** Primary market lenses — what the board is actually for */
+export type MarketCategory =
+  | "trending"
+  | "new"
+  | "gainers"
+  | "losers"
+  | "volume"
+  | "liquidity"
+  | "unusual"
+  | "watched";
+
 export type Filter =
   | "ALL"
   | "SAFE"
